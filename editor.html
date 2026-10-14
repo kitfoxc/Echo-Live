@@ -593,6 +593,7 @@
                 <h2 class="tabpage-panel-title" id="tabpage-panel-title-broadcast">随机消息控制</h2>
                 <div class="echo-editor-form" id="random-message-panel">
                     <p>消息库仅从 <code>message.js</code> 载入。编辑该文件中的 <code>window.EchoLiveRandomMessages</code> 数组即可管理预设消息。随机消息默认不显示说话人；每轮抽取不重复，全部抽完后自动重新洗牌。</p>
+                    <p>需要创建或编辑富文本预设？<a href="message_editor.html" target="_blank" rel="noopener">打开随机消息富文本编辑器</a>，编辑完成后将导出的 <code>message.js</code> 替换到项目根目录。</p>
                     <div class="echo-editor-form-row">
                         <label>消息内容</label>
                         <div id="random-message-list" class="random-message-list" role="list" aria-live="polite"></div>
