@@ -146,7 +146,7 @@ body {
 }
 
 /* :has() toggles on each clear -> first rendered character, restarting the pop animation. */
-#echo-live .center-center:has(.content:not(:empty)) {
+#echo-live .center-center:has(.content .echo-chr, .content img, .content video, .content .echo-emoji-icon, .content br, .content ruby) {
     visibility: visible;
     animation: imessage-bubble-pop 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -231,7 +231,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #echo-live .center-center:has(.content:not(:empty)) {
+    #echo-live .center-center:has(.content .echo-chr, .content img, .content video, .content .echo-emoji-icon, .content br, .content ruby) {
         animation: none;
     }
 }
