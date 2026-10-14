@@ -213,10 +213,10 @@ echo.on('printEnd', function() {
 
     if (messageActions.printEnd === 'next') {
         messageActions.printEnd = undefined;
-        setTimeout(() => echo.next(), 0);
+        echo.scheduleQueueAdvance(true);
     } else if (echo.messageList.length > 0) {
-        // 自动播放队列；延迟到当前 print() 调用完成后，避免旧消息的状态覆盖下一条。
-        setTimeout(() => echo.next(), 0);
+        // 统一调度队列推进，避免新批次到达时重复 next() 导致跳过消息。
+        echo.scheduleQueueAdvance();
     }
 });
 
