@@ -58,16 +58,30 @@
             || (message.data && (message.data.image !== undefined || message.data.emoji !== undefined))
             || (message.data && message.data.customData !== undefined);
     }
+    function isValidMessagePayload(message) {
+        if (typeof message === 'string') return true;
+        if (Array.isArray(message)) return message.every(isValidMessagePayload);
+        if (!message || typeof message !== 'object') return false;
+        // Echo.messageSerialize() spreads msg.text even for media/typewrite
+        // segments, so every native paragraph object must provide a text string.
+        return typeof message.text === 'string';
+    }
     function normalizePreset(preset) {
         if (typeof preset === 'string') return preset.trim() ? preset : null;
-        if (Array.isArray(preset)) return hasRenderableContent(preset) ? preset : null;
+        if (Array.isArray(preset)) {
+            return preset.every(isValidMessagePayload) && hasRenderableContent(preset) ? preset : null;
+        }
         if (preset && typeof preset === 'object') {
             if (Array.isArray(preset.messages)) {
-                const validQueue = preset.messages.every(item => item && typeof item === 'object'
-                    && Object.prototype.hasOwnProperty.call(item, 'message'));
-                return validQueue && hasRenderableContent(preset) ? preset : null;
+                const validQueue = preset.messages.length > 0 && preset.messages.every(item =>
+                    item && typeof item === 'object'
+                    && Object.prototype.hasOwnProperty.call(item, 'message')
+                    && isValidMessagePayload(item.message)
+                    && hasRenderableContent(item.message)
+                );
+                return validQueue ? preset : null;
             }
-            return hasRenderableContent(preset) ? preset : null;
+            return isValidMessagePayload(preset) && hasRenderableContent(preset) ? preset : null;
         }
         return null;
     }
