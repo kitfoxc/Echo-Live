@@ -23,23 +23,51 @@
 
     function setStatus(message) { statusEl.textContent = message; }
     function setInputHint(message) { if (inputHintEl) inputHintEl.textContent = '输入提示：' + message; }
-    // Rich-text messages may be strings, Echo paragraph objects, or arrays of
-    // formatted segments returned by EchoLiveTools.formattingCodeToMessage().
-    // Keep the original structure for sendData(); only flatten it for previews
-    // and timing calculations.
+    // Presets store Echo-native message data directly. A string/object/array is
+    // one message; { messages: [...] } is an ordered queue of message envelopes.
+    // Arrays at the message level are paragraph segments, never queue entries.
     function messageText(message) {
         if (typeof message === 'string') return message;
         if (Array.isArray(message)) return message.map(messageText).join('');
-        if (message && typeof message === 'object') {
-            if (typeof message.text === 'string') return message.text;
-            if (typeof message.typewrite === 'string') return message.typewrite;
+        if (!message || typeof message !== 'object') return '';
+        if (Array.isArray(message.messages)) {
+            return message.messages.map(item => messageText(item && typeof item === 'object' && Object.prototype.hasOwnProperty.call(item, 'message') ? item.message : item)).join(' ');
         }
-        return '';
+        if (Object.prototype.hasOwnProperty.call(message, 'message')) return messageText(message.message);
+        let text = '';
+        if (typeof message.text === 'string') text += message.text;
+        if (typeof message.typewrite === 'string') text += message.typewrite;
+        if (message.data && typeof message.data === 'object') {
+            if (message.data.image !== undefined) text += ' [图片] ';
+            if (message.data.emoji !== undefined) text += ' [表情] ';
+        }
+        if (message.ruby !== undefined) text += String(message.ruby);
+        return text;
     }
-    function normalizePreset(message) {
-        if (typeof message === 'string') return message.trim() ? message : null;
-        if (Array.isArray(message) || (message && typeof message === 'object')) {
-            return messageText(message).trim() ? message : null;
+    function hasRenderableContent(message) {
+        if (typeof message === 'string') return message.trim().length > 0;
+        if (Array.isArray(message)) return message.some(hasRenderableContent);
+        if (!message || typeof message !== 'object') return false;
+        if (Array.isArray(message.messages)) return message.messages.some(item => {
+            if (!item || typeof item !== 'object') return hasRenderableContent(item);
+            return hasRenderableContent(Object.prototype.hasOwnProperty.call(item, 'message') ? item.message : item);
+        });
+        if (Object.prototype.hasOwnProperty.call(message, 'message')) return hasRenderableContent(message.message);
+        return (typeof message.text === 'string' && message.text.trim().length > 0)
+            || (typeof message.typewrite === 'string' && message.typewrite.length > 0)
+            || (message.data && (message.data.image !== undefined || message.data.emoji !== undefined))
+            || (message.data && message.data.customData !== undefined);
+    }
+    function normalizePreset(preset) {
+        if (typeof preset === 'string') return preset.trim() ? preset : null;
+        if (Array.isArray(preset)) return hasRenderableContent(preset) ? preset : null;
+        if (preset && typeof preset === 'object') {
+            if (Array.isArray(preset.messages)) {
+                const validQueue = preset.messages.every(item => item && typeof item === 'object'
+                    && Object.prototype.hasOwnProperty.call(item, 'message'));
+                return validQueue && hasRenderableContent(preset) ? preset : null;
+            }
+            return hasRenderableContent(preset) ? preset : null;
         }
         return null;
     }
@@ -48,8 +76,14 @@
             ? window.EchoLiveRandomMessages.map(normalizePreset).filter(message => message !== null)
             : [];
     }
+    function presetLabel(preset) {
+        return preset && typeof preset === 'object' && !Array.isArray(preset) && typeof preset.name === 'string'
+            ? preset.name
+            : messageText(preset).trim().replace(/\s+/g, ' ').slice(0, 90);
+    }
     function renderPresets() {
-        const count = presets().length;
+        const all = presets();
+        const count = all.length;
         listEl.textContent = '';
         const summary = document.createElement('p');
         summary.className = 'random-message-count';
@@ -68,7 +102,7 @@
         list.className = 'random-message-items';
         all.forEach(message => {
             const item = document.createElement('li');
-            item.textContent = messageText(message);
+            item.textContent = presetLabel(message) || '（含媒体或扩展数据的消息）';
             list.appendChild(item);
         });
         listEl.appendChild(list);
@@ -83,7 +117,9 @@
     }
     function nextMessage() {
         const all = presets();
-        if (!all.length) throw new Error('消息库为空，请在 message.js 中至少配置一条消息。');
+        if (!all.length) throw new Error('消息库为空或没有有效消息，请检查 message.js 的 JSON 数据结构。');
+        // Discard stale references if the source preset count has changed.
+        if (bag.length > all.length) bag = [];
         if (!bag.length) {
             bag = shuffle(all);
             if (bag.length > 1 && messageText(bag[0]) === lastMessage) [bag[0], bag[1]] = [bag[1], bag[0]];
@@ -99,23 +135,23 @@
             setStatus('编辑器广播尚未初始化，请稍后重试。');
             return false;
         }
-        let payload = message;
-        // 自动消息支持 Echo-Live 快速格式化代码（例如 @b粗体@b）。
-        // 如果解析器不可用，则保留原文，避免随机消息发送失败。
-        if (typeof EchoLiveTools !== 'undefined' && typeof EchoLiveTools.formattingCodeToMessage === 'function') {
-            try {
-                payload = EchoLiveTools.formattingCodeToMessage(message);
-            } catch (error) {
-                console.warn('[Echo-Live Random Messages] Formatting code parse failed; sending raw text.', error);
-                payload = message;
+        // Queue presets use the native sendData envelope. Single-message presets
+        // are wrapped once; paragraph arrays remain one message with many segments.
+        if (message && typeof message === 'object' && !Array.isArray(message) && Array.isArray(message.messages)) {
+            const queue = JSON.parse(JSON.stringify(message.messages));
+            if (!queue.length) {
+                setStatus('该队列没有消息。');
+                return false;
             }
+            elb.sendData({
+                username: typeof message.username === 'string' ? message.username : '',
+                messages: queue
+            });
+        } else {
+            elb.sendData({ username: '', messages: [{ message: JSON.parse(JSON.stringify(message)) }] });
         }
-        elb.sendData({ username: '', messages: [{ message: payload }] });
-        lastMessage = message;
-        if (lastEl) lastEl.textContent = message;
-        elb.sendData({ username: '', messages: [{ message }] });
         lastMessage = messageText(message);
-        if (lastEl) lastEl.textContent = lastMessage;
+        if (lastEl) lastEl.textContent = presetLabel(message) || lastMessage;
         return true;
     }
     function sendRandom() {
