@@ -1,7 +1,7 @@
 /*
  * Echo-Live random marquee preset messages.
  * Edit this array to change the built-in message list.
- * The editor also allows per-browser edits, saved locally.
+ * This file is the only source of truth; edit this array to change presets.
  */
 window.EchoLiveRandomMessages = [
     "欢迎来到直播间！",
