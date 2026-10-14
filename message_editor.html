@@ -3,225 +3,144 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Echo-Live 随机消息富文本编辑器</title>
+<title>Echo-Live 随机消息 JSON 编辑器</title>
 <style>
-:root{color-scheme:light dark;--bg:#f4f6fa;--panel:#fff;--text:#20232a;--muted:#697386;--line:#dfe4ec;--accent:#2878e8;--soft:#edf4ff;--danger:#c0392b;--shadow:0 8px 28px #18233b12}
+:root{color-scheme:light dark;--bg:#f3f5f9;--panel:#fff;--text:#20232a;--muted:#687386;--line:#dce2eb;--accent:#2878e8;--soft:#eaf2ff;--danger:#c43e36;--shadow:0 8px 28px #18233b12}
 @media(prefers-color-scheme:dark){:root{--bg:#17191e;--panel:#22252c;--text:#eef1f6;--muted:#a4adbc;--line:#3a404b;--accent:#80b5ff;--soft:#29384c;--danger:#ff8178;--shadow:0 8px 28px #0003}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,"Segoe UI","Microsoft YaHei",sans-serif}
-header{padding:22px max(18px,calc((100vw - 1440px)/2));background:var(--panel);border-bottom:1px solid var(--line)}h1{font-size:22px;margin:0 0 5px}header p{margin:0;color:var(--muted)}
-main{max-width:1440px;margin:auto;padding:18px;display:grid;grid-template-columns:minmax(290px,.85fr) minmax(360px,1.15fr);gap:16px}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);min-width:0;overflow:hidden}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}h2{font-size:16px;margin:0}.panel-body{padding:16px}
-button,.file-button{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:8px;padding:7px 10px;cursor:pointer;font:inherit;white-space:nowrap}button:hover,.file-button:hover{border-color:var(--accent)}button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}button.danger{color:var(--danger)}button:disabled{opacity:.45;cursor:not-allowed}
-.actions{display:flex;gap:7px;flex-wrap:wrap}.toolbar{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.toolbar button{min-width:34px;padding:6px 9px}.toolbar label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:4px 8px}
-#message-list{display:flex;flex-direction:column;gap:9px;max-height:calc(100vh - 260px);overflow:auto;padding:12px}.message-card{border:1px solid var(--line);border-radius:10px;padding:10px 11px;cursor:pointer}.message-card.selected{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 20%,transparent)}.card-top{display:flex;align-items:center;gap:9px;margin-bottom:7px}.number{display:inline-grid;place-items:center;min-width:27px;height:27px;border-radius:7px;background:var(--soft);color:var(--accent);font-weight:700}.card-preview{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--muted);max-height:3.2em;overflow:hidden}.card-actions{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap}.card-actions button{font-size:12px;padding:4px 7px}
-.field-label{display:block;font-weight:650;margin:12px 0 6px}.hint{font-size:12px;color:var(--muted);margin:5px 0}.editor-mode{display:flex;gap:6px;margin-bottom:10px}.editor-mode button.active{background:var(--soft);border-color:var(--accent)}
-textarea,input[type=text]{width:100%;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px;font:14px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace}textarea:focus,input:focus{outline:2px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:1px}
-#visual-editor{min-height:180px;resize:vertical}#source-editor{min-height:240px;resize:vertical}#preview{min-height:100px;padding:18px;border:1px solid var(--line);border-radius:10px;background:#11151c;color:#f5f7fb;font:20px/1.65 "Segoe UI","Microsoft YaHei",sans-serif;white-space:pre-wrap;overflow-wrap:anywhere}
-.preview-label{display:flex;align-items:center;justify-content:space-between;margin:18px 0 7px;font-weight:650}.status{padding:10px 16px;color:var(--muted);border-top:1px solid var(--line);min-height:40px}
-.color-input{width:32px;height:30px;border:0;padding:0;background:transparent}.hidden{display:none!important}.inline-check{display:flex;align-items:center;gap:8px}.spacer{flex:1}
-@media(max-width:850px){main{grid-template-columns:1fr;padding:10px}#message-list{max-height:360px}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 system-ui,"Segoe UI","Microsoft YaHei",sans-serif}header{padding:22px max(18px,calc((100vw - 1440px)/2));background:var(--panel);border-bottom:1px solid var(--line)}h1{font-size:22px;margin:0 0 5px}header p{margin:0;color:var(--muted)}main{max-width:1440px;margin:auto;padding:18px;display:grid;grid-template-columns:minmax(300px,.85fr) minmax(380px,1.15fr);gap:16px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);min-width:0;overflow:hidden}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}h2{font-size:16px;margin:0}.panel-body{padding:16px}button,.file-button{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:8px;padding:7px 10px;cursor:pointer;font:inherit;white-space:nowrap}button:hover{border-color:var(--accent)}button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}button.danger{color:var(--danger)}button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:7px;flex-wrap:wrap}.hint{font-size:12px;color:var(--muted);margin:7px 0}.status{padding:10px 16px;color:var(--muted);border-top:1px solid var(--line);min-height:40px}#message-list{display:flex;flex-direction:column;gap:9px;max-height:calc(100vh - 260px);overflow:auto;padding:12px}.message-card{border:1px solid var(--line);border-radius:10px;padding:10px 11px;cursor:pointer}.message-card.selected{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 20%,transparent)}.card-top{display:flex;align-items:flex-start;gap:9px}.number{display:inline-grid;place-items:center;min-width:27px;height:27px;border-radius:7px;background:var(--soft);color:var(--accent);font-weight:700}.card-preview{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--muted);max-height:4.5em;overflow:hidden;flex:1}.card-actions{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap}.card-actions button{font-size:12px;padding:4px 7px}label.field-label{display:block;font-weight:650;margin:10px 0 6px}textarea{width:100%;min-height:300px;resize:vertical;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:12px;font:13px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace}textarea:focus{outline:2px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:1px}#preview{min-height:110px;padding:16px;border:1px solid var(--line);border-radius:10px;background:#11151c;color:#f5f7fb;font:19px/1.65 "Segoe UI","Microsoft YaHei",sans-serif;white-space:pre-wrap;overflow-wrap:anywhere}.preview-queue-item{border-bottom:1px solid #ffffff30;padding:6px 0}.preview-queue-item:last-child{border-bottom:0}.preview-label{display:flex;align-items:center;justify-content:space-between;margin:18px 0 7px;font-weight:650}.hidden{display:none!important}.schema{background:var(--soft);border-radius:9px;padding:10px 12px;font-size:12px;overflow-wrap:anywhere}.schema code{font-family:ui-monospace,Consolas,monospace}@media(max-width:850px){main{grid-template-columns:1fr;padding:10px}#message-list{max-height:360px}}
 </style>
 </head>
 <body>
 <header>
-<h1>随机消息富文本编辑器</h1>
-<p>创建、导入、编辑和预览 message.js。可视化编辑适用于快速格式化代码；高级源码模式用于保留 Echo 原生消息对象、段落数组和其他字段。</p>
+<h1>随机消息 JSON 编辑器</h1>
+<p>使用 Echo-Live 原生消息结构编辑预设。不再将快速格式化代码当作数据；消息中的 text、style、data、pause、typewrite 等字段以 JSON 形式保存。</p>
 </header>
 <main>
 <section class="panel">
-<div class="panel-head"><h2>消息列表 <span id="count">(0)</span></h2><div class="actions"><button id="add-btn" class="primary">＋ 新增</button><button id="import-btn">导入 message.js</button><input id="file-input" type="file" accept=".js,.json,text/javascript,application/json" class="hidden"></div></div>
-<div class="hint" style="padding:10px 14px 0">按序号排列。选中一条消息即可编辑；每条消息都可独立模拟播放、复制源码或删除。</div>
+<div class="panel-head"><h2>消息列表 <span id="count">(0)</span></h2><div class="actions"><button id="add-btn" class="primary">＋ 新增</button><button id="import-btn">导入</button><input id="file-input" type="file" accept=".js,.json,text/javascript,application/json" class="hidden"></div></div>
+<p class="hint" style="padding:0 14px">每个编号代表一个随机预设。预设可以是一条消息，也可以是按顺序发送的消息队列。</p>
 <div id="message-list"></div>
-<div class="panel-body" style="border-top:1px solid var(--line)"><div class="actions"><button id="export-btn" class="primary">另存为 message.js</button><button id="copy-all-btn">复制整个 message.js</button><button id="import-json-btn">粘贴/导入 JSON</button></div><textarea id="import-json" class="hidden" placeholder="粘贴 message.js 中的数组或 JSON 数组，然后点击“载入粘贴内容”"></textarea><div id="import-json-actions" class="actions hidden" style="margin-top:8px"><button id="load-json-btn" class="primary">载入粘贴内容</button><button id="cancel-json-btn">取消</button></div></div>
+<div class="panel-body" style="border-top:1px solid var(--line)"><div class="actions"><button id="export-btn" class="primary">另存为 message.js</button><button id="copy-all-btn">复制完整源码</button><button id="paste-toggle-btn">粘贴 JSON</button></div><textarea id="paste-area" class="hidden" style="min-height:120px;margin-top:10px" placeholder="粘贴 JSON 数组或 window.EchoLiveRandomMessages = [...]"></textarea><div id="paste-actions" class="actions hidden" style="margin-top:8px"><button id="load-paste-btn" class="primary">载入</button><button id="cancel-paste-btn">取消</button></div></div>
 </section>
 <section class="panel">
-<div class="panel-head"><h2 id="editor-title">编辑消息</h2><div class="actions"><button id="save-item-btn" class="primary">应用修改</button></div></div>
+<div class="panel-head"><h2 id="editor-title">消息源码</h2><div class="actions"><button id="apply-btn" class="primary">应用修改</button></div></div>
 <div class="panel-body">
-<div class="editor-mode"><button id="visual-mode-btn" class="active">快速格式化编辑</button><button id="source-mode-btn">原生消息源码</button></div>
-<div id="visual-pane">
-<label class="field-label" for="visual-editor">消息文本 / 快速格式化代码</label>
-<div class="toolbar" aria-label="格式化工具栏">
-<button type="button" data-wrap="@b" title="粗体"><b>B</b></button><button type="button" data-wrap="@i" title="斜体"><i>I</i></button><button type="button" data-wrap="@u" title="下划线"><u>U</u></button><button type="button" data-wrap="@s" title="删除线"><s>S</s></button><button type="button" data-wrap="@+" title="增大字号">A+</button><button type="button" data-wrap="@-" title="减小字号">A−</button><button type="button" data-wrap="@r" title="清除格式">@r</button>
-<label>文字颜色 <input id="color-input" class="color-input" type="color" value="#66ccff"></label><button id="insert-color-btn" type="button">插入颜色</button><button id="insert-emoji-btn" type="button" title="输入表情 ID">表情/图片 ID</button><button id="insert-class-btn" type="button" title="输入样式类名">样式类</button>
+<label class="field-label" for="source-editor">完整 JSON 消息值</label>
+<textarea id="source-editor" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+<p class="hint">编辑当前预设的完整 JSON 值。可使用字符串、段落对象、段落对象数组，或带 messages 数组的队列对象。应用时会验证 JSON 语法。</p>
+<div class="schema"><strong>结构示例</strong><br>
+单条富文本：<code>{"text":"欢迎","style":{"bold":true,"color":"#66CCFF"}}</code><br>
+多文本段落：<code>[{"text":"第一段","style":{"bold":true}},{"text":"第二段","pause":8}]</code><br>
+消息队列：<code>{"name":"欢迎队列","messages":[{"message":"第一条"},{"message":[{"text":"第二条","style":{"italic":true}}]}]}</code><br>
+原生段落字段可包含 <code>class</code>、<code>style</code>、<code>data</code>、<code>typewrite</code>、<code>ruby</code>、<code>pause</code>、<code>speed</code>、<code>event</code> 等。队列中每项使用 Echo-Live 消息信封 <code>{"message": ...}</code>。
 </div>
-<textarea id="visual-editor" spellcheck="false" placeholder="输入消息文本。选中文字后使用工具栏插入快速格式化代码。"></textarea>
-<p class="hint">格式代码会影响后续文本，直到 @r。支持 @b、@i、@u、@s、@+、@-、@r、@[#RRGGBB]、@{表情ID}、@&lt;类名&gt; 和 @&lt;:类名&gt;。如需段落 pause/typewrite、style、事件、自定义数据等原生字段，请切换到“原生消息源码”。</p>
-</div>
-<div id="source-pane" class="hidden">
-<label class="field-label" for="source-editor">当前消息值（JSON）</label>
-<textarea id="source-editor" spellcheck="false" placeholder='"文本" 或 {"text":"文本","style":{"bold":true}} 或 [{"text":"第一段"},{"text":"第二段","pause":40}]'></textarea>
-<p class="hint">这里编辑的是 message.js 数组中的单条 message 值，不是外层广播包。支持 Echo-Live 原生字符串、段落对象、段落数组和其余可序列化字段。导出时保留对象结构。</p>
-</div>
-<div class="preview-label"><span>模拟播放预览</span><button id="preview-btn">重新模拟播放</button></div>
+<div class="preview-label"><span>模拟播放预览</span><button id="preview-btn">刷新预览</button></div>
 <div id="preview" aria-live="polite"></div>
-<p class="hint">此预览用于检查文字、常见格式代码和段落结构；实际表情资源、图片、扩展类、打印动画及主题效果以 Echo-Live 运行环境为准。</p>
+<p class="hint">预览会呈现常见文本和样式；打印动画、扩展样式类、表情资源及自定义事件需要在实际 Echo-Live 环境中验证。原生字段会保留在源码中，即使预览无法完全模拟。</p>
 </div>
-<div class="status" id="status" role="status">就绪。可新增消息，或导入已有 message.js。</div>
+<div class="status" id="status" role="status">就绪。</div>
 </section>
 </main>
 <script>
 (function(){
 'use strict';
 const $=s=>document.querySelector(s);
-let messages=[];
-let selected=0;
-let mode='visual';
-let draft=null;
-const list=$('#message-list');
-const status=$('#status');
+const list=$('#message-list'),status=$('#status');
+let messages=[],selected=0,draft=null;
 function setStatus(s){status.textContent=s}
 function clone(v){return JSON.parse(JSON.stringify(v))}
-function isObj(v){return v!==null&&typeof v==='object'}
-function plain(v){
+function isObject(v){return v!==null&&typeof v==='object'&&!Array.isArray(v)}
+function displayText(v){
  if(typeof v==='string')return v;
- if(Array.isArray(v))return v.map(plain).join('');
- if(isObj(v)){if(typeof v.text==='string')return v.text;if(typeof v.typewrite==='string')return v.typewrite;return Object.keys(v).filter(k=>k!=='style').map(k=>plain(v[k])).join('')}
- return v==null?'':String(v)
+ if(Array.isArray(v))return v.map(displayText).join('');
+ if(!isObject(v))return '';
+ if(Array.isArray(v.messages))return v.messages.map(x=>displayText(isObject(x)&&Object.prototype.hasOwnProperty.call(x,'message')?x.message:x)).join(' → ');
+ if(Object.prototype.hasOwnProperty.call(v,'message'))return displayText(v.message);
+ let s=typeof v.text==='string'?v.text:typeof v.typewrite==='string'?v.typewrite:'';
+ if(v.data&&v.data.image!==undefined)s+=' [图片]';
+ if(v.data&&v.data.emoji!==undefined)s+=' [表情]';
+ if(v.ruby!==undefined)s+=' ('+v.ruby+')';
+ return s;
 }
-function pretty(v){return JSON.stringify(v,null,2)}
-function current(){return messages[selected]}
-function parseMessageSource(s){return JSON.parse(s)}
-function messageFromVisual(){return $('#visual-editor').value}
-function syncDraftFromPane(){
- try{
-  if(mode==='visual'){draft=messageFromVisual();return true}
-  draft=parseMessageSource($('#source-editor').value);return true
- }catch(e){setStatus('源码格式错误：'+e.message);return false}
-}
-function switchMode(next){
- if(!syncDraftFromPane()&&next!==mode)return;
- if(next==='visual'&&mode==='source'&&typeof draft!=='string'&&!confirm('当前消息是原生对象/数组格式。切换到快速格式化编辑会将其转换为纯文本字符串，可能丢失 pause、typewrite、style 等字段。仍要转换吗？'))return;
- mode=next;
- $('#visual-pane').classList.toggle('hidden',mode!=='visual');
- $('#source-pane').classList.toggle('hidden',mode!=='source');
- $('#visual-mode-btn').classList.toggle('active',mode==='visual');
- $('#source-mode-btn').classList.toggle('active',mode==='source');
- if(mode==='visual'){
-  $('#visual-editor').value=typeof draft==='string'?draft:plain(draft);
- }else{
-  $('#source-editor').value=pretty(draft);
- }
- renderPreview(draft);
-}
-function renderRichText(text,container){
- let i=0,html='',state={bold:false,italic:false,underline:false,strike:false,size:0,color:'',classes:[]};
- function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
- function span(s){if(!s)return;let css=[];if(state.bold)css.push('font-weight:700');if(state.italic)css.push('font-style:italic');let dec=[];if(state.underline)dec.push('underline');if(state.strike)dec.push('line-through');if(dec.length)css.push('text-decoration:'+dec.join(' '));if(state.color)css.push('color:'+state.color);if(state.size)css.push('font-size:'+Math.max(.65,Math.min(1.8,1+state.size*.12))+'em');let cls=state.classes.map(c=>'echo-text-'+c).join(' ');html+='<span'+(css.length?' style="'+css.join(';')+'"':'')+(cls?' class="'+esc(cls)+'"':'')+'>'+esc(s)+'</span>'}
- while(i<text.length){
-  if(text[i]==='\\'&&text[i+1]==='@'){span('@');i+=2;continue}
-  if(text[i]==='@'){
-   let rest=text.slice(i),m;
-   if((m=rest.match(/^@\[([#a-fA-F0-9]{3,8})\]/))){state.color=m[1].startsWith('#')?m[1]:'#'+m[1];i+=m[0].length;continue}
-   if((m=rest.match(/^@\{([^}]+)\}/))){html+='<span class="token">〔表情/图片:'+esc(m[1])+'〕</span>';i+=m[0].length;continue}
-   if((m=rest.match(/^@<(:?)([\w-]+)>/))){state.classes.push(m[2]);html+='<span class="token">〔类:'+esc(m[2])+'〕</span>';i+=m[0].length;continue}
-   if(text.slice(i,i+2)==='@b'){state.bold=true;i+=2;continue}
-   if(text.slice(i,i+2)==='@i'){state.italic=true;i+=2;continue}
-   if(text.slice(i,i+2)==='@u'){state.underline=true;i+=2;continue}
-   if(text.slice(i,i+2)==='@s'){state.strike=true;i+=2;continue}
-   if(text.slice(i,i+2)==='@+'){state.size++;i+=2;continue}
-   if(text.slice(i,i+2)==='@-'){state.size--;i+=2;continue}
-   if(text.slice(i,i+2)==='@r'){state={bold:false,italic:false,underline:false,strike:false,size:0,color:'',classes:[]};i+=2;continue}
-  }
-  let j=i+1;while(j<text.length&&text[j]!=='@'&&!(text[j]==='\\'&&text[j+1]==='@'))j++;span(text.slice(i,j));i=j
- }
- container.innerHTML=html||'<span style="opacity:.55">（空消息）</span>'
-}
-function renderPreview(v){
- const box=$('#preview');box.textContent='';
- if(v===undefined){box.textContent='（尚未选择消息）';return}
- if(typeof v==='string'){renderRichText(v,box);return}
- if(Array.isArray(v)){
-  v.forEach((part,index)=>{if(index)box.appendChild(document.createTextNode(''));const seg=document.createElement('span');if(typeof part==='string'){renderRichText(part,seg)}else if(isObj(part)){const value=typeof part.text==='string'?part.text:typeof part.typewrite==='string'?part.typewrite:plain(part);renderRichText(value,seg);const st=part.style;if(isObj(st)){if(st.bold)seg.style.fontWeight='700';if(st.italic)seg.style.fontStyle='italic';if(st.underline)seg.style.textDecoration='underline';if(st.color)seg.style.color=st.color}if(part.pause)seg.title='停顿：'+part.pause+' 个打印循环'}else renderRichText(plain(part),seg);box.appendChild(seg)});
-  if(!v.length)box.textContent='（空段落数组）';return
- }
- if(isObj(v)){
-  const value=typeof v.text==='string'?v.text:typeof v.typewrite==='string'?v.typewrite:plain(v);
-  renderRichText(value,box);
-  const st=v.style;
-  if(isObj(st)){if(st.bold)box.style.fontWeight='700';if(st.italic)box.style.fontStyle='italic';if(st.underline)box.style.textDecoration='underline';if(st.color)box.style.color=st.color}
-  const extras=[];if(v.pause)extras.push('停顿 '+v.pause);if(v.typewrite)extras.push('模拟打字 '+v.typewrite);if(v.class)extras.push('类 '+v.class);
-  if(extras.length){const note=document.createElement('div');note.style.cssText='font-size:12px;opacity:.65;margin-top:8px';note.textContent='原生字段：'+extras.join(' · ');box.appendChild(note)}return
- }
- box.textContent=String(v)
-}
-function selectItem(i){
- if(i<0||i>=messages.length)return;
- if(!syncDraftFromPane()&&draft!==null)return;
- if(draft!==null&&messages[selected]!==undefined)messages[selected]=clone(draft);
- selected=i;draft=clone(messages[selected]);
- mode='visual';
- $('#visual-pane').classList.remove('hidden');$('#source-pane').classList.add('hidden');
- $('#visual-mode-btn').classList.add('active');$('#source-mode-btn').classList.remove('active');
- $('#visual-editor').value=typeof draft==='string'?draft:plain(draft);
- $('#source-editor').value=pretty(draft);
- $('#editor-title').textContent='编辑消息 '+(selected+1);
- renderPreview(draft);renderList();setStatus('正在编辑第 '+(selected+1)+' 条消息。')
-}
-function renderList(){
- $('#count').textContent='('+messages.length+')';list.textContent='';
- if(!messages.length){const p=document.createElement('p');p.className='hint';p.textContent='消息列表为空，点击“新增”创建一条。';list.appendChild(p);return}
- messages.forEach((m,i)=>{
-  const card=document.createElement('article');card.className='message-card'+(i===selected?' selected':'');card.tabIndex=0;
-  const top=document.createElement('div');top.className='card-top';const n=document.createElement('span');n.className='number';n.textContent=String(i+1);const text=document.createElement('div');text.className='card-preview';text.textContent=plain(m)||'（空消息）';top.append(n,text);card.appendChild(top);
-  const actions=document.createElement('div');actions.className='card-actions';
-  const edit=button('编辑',()=>selectItem(i));const play=button('模拟播放',()=>{renderPreview(messages[i]);setStatus('已模拟播放第 '+(i+1)+' 条消息。')});
-  const copy=button('复制源码',()=>copyText(pretty(m),'已复制第 '+(i+1)+' 条消息的源码。'));const del=button('删除',()=>deleteItem(i),'danger');
-  actions.append(edit,play,copy,del);card.appendChild(actions);card.addEventListener('click',e=>{if(!e.target.closest('button'))selectItem(i)});card.addEventListener('keydown',e=>{if(e.key==='Enter')selectItem(i)});list.appendChild(card)
- })
-}
-function button(label,fn,cls){const b=document.createElement('button');b.type='button';b.textContent=label;if(cls)b.className=cls;b.addEventListener('click',e=>{e.stopPropagation();fn()});return b}
-function deleteItem(i){if(!confirm('确定删除第 '+(i+1)+' 条消息？'))return;messages.splice(i,1);if(!messages.length){selected=0;draft='';$('#visual-editor').value='';$('#source-editor').value='';$('#editor-title').textContent='编辑消息';renderPreview(undefined)}else{selected=Math.min(selected>=i?Math.max(0,i-1):selected,messages.length-1);draft=clone(messages[selected]);$('#visual-editor').value=typeof draft==='string'?draft:plain(draft);$('#source-editor').value=pretty(draft);renderPreview(draft)}renderList();setStatus('已删除消息。')}
-function saveCurrent(){
- if(!syncDraftFromPane())return false;
- if(draft===null||draft===undefined){setStatus('消息不能为空值；请使用空字符串表示空消息。');return false}
- messages[selected]=clone(draft);
- $('#source-editor').value=pretty(draft);renderList();renderPreview(draft);setStatus('第 '+(selected+1)+' 条消息已应用修改。');return true
-}
-function exportSource(){return '/* Echo-Live random marquee preset messages.\n * Generated by message_editor.html.\n * Keep message values in Echo-Live native format.\n */\nwindow.EchoLiveRandomMessages = '+JSON.stringify(messages,null,4)+';\n'}
-function downloadFile(name,text){const blob=new Blob([text],{type:'text/javascript;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-async function copyText(text,msg){try{await navigator.clipboard.writeText(text);setStatus(msg)}catch(e){const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();setStatus(ok?msg:'复制失败，请手动复制源码。')}}
+function presetLabel(v){return isObject(v)&&typeof v.name==='string'?v.name:(displayText(v).trim().replace(/\s+/g,' ').slice(0,110)||'（媒体或扩展消息）')}
 function parseImported(text){
  let s=text.replace(/^\uFEFF/,'').trim();
  const match=s.match(/(?:window\.)?EchoLiveRandomMessages\s*=\s*([\s\S]*?);?\s*$/);
  if(match)s=match[1].trim().replace(/;$/,'');
- if(!s.startsWith('['))throw new Error('未找到消息数组。请导入包含 window.EchoLiveRandomMessages = [...] 的 message.js，或 JSON 数组。');
- return JSON.parse(s)
+ const value=JSON.parse(s);
+ if(!Array.isArray(value))throw new Error('导入内容必须是 JSON 数组。');
+ return value;
 }
-$('#add-btn').addEventListener('click',()=>{
- if(!syncDraftFromPane())return;
- if(messages[selected]!==undefined)messages[selected]=clone(draft);
- messages.push('');selected=messages.length-1;draft='';mode='visual';$('#visual-editor').value='';$('#source-editor').value='""';$('#editor-title').textContent='编辑消息 '+(selected+1);$('#visual-pane').classList.remove('hidden');$('#source-pane').classList.add('hidden');renderList();renderPreview('');$('#visual-editor').focus();setStatus('已新增消息。')
-});
+function renderPreviewValue(value,box){
+ if(typeof value==='string'){box.textContent=value||'（空文本）';return}
+ if(Array.isArray(value)){value.forEach(part=>{const span=document.createElement('span');renderPreviewValue(part,span);box.appendChild(span)});return}
+ if(!isObject(value)){box.textContent=value==null?'':String(value);return}
+ if(Array.isArray(value.messages)){
+  value.messages.forEach((entry,i)=>{const item=document.createElement('div');item.className='preview-queue-item';const payload=isObject(entry)&&Object.prototype.hasOwnProperty.call(entry,'message')?entry.message:entry;renderPreviewValue(payload,item);box.appendChild(item)});return
+ }
+ if(Object.prototype.hasOwnProperty.call(value,'message')){renderPreviewValue(value.message,box);return}
+ const span=document.createElement('span');
+ span.textContent=typeof value.text==='string'?value.text:typeof value.typewrite==='string'?value.typewrite:'';
+ const st=value.style;
+ if(isObject(st)){
+  if(st.bold)span.style.fontWeight='700';
+  if(st.italic)span.style.fontStyle='italic';
+  const deco=[];if(st.underline)deco.push('underline');if(st.strikethrough)deco.push('line-through');
+  if(deco.length)span.style.textDecoration=deco.join(' ');
+  if(typeof st.color==='string')span.style.color=st.color;
+  const sizes={'extra-small':'.75em','small':'.875em','middle':'1em','large':'1.25em','extra-large':'1.5em'};
+  if(sizes[st.size])span.style.fontSize=sizes[st.size];
+ }
+ if(typeof value.class==='string')span.title='class: '+value.class;
+ if(value.pause)span.title+=(span.title?' · ':'')+'pause: '+value.pause;
+ if(value.typewrite!==undefined)span.title+=(span.title?' · ':'')+'typewrite';
+ if(value.data&&value.data.image!==undefined)span.textContent+=' [图片]';
+ if(value.data&&value.data.emoji!==undefined)span.textContent+=' [表情]';
+ box.appendChild(span);
+}
+function renderPreview(value){const box=$('#preview');box.textContent='';renderPreviewValue(value,box)}
+function saveDraft(){
+ try{draft=JSON.parse($('#source-editor').value);if(draft===null||typeof draft==='number'||typeof draft==='boolean')throw new Error('消息值应为字符串、对象或数组。');messages[selected]=clone(draft);renderList();renderPreview(draft);setStatus('第 '+(selected+1)+' 条消息已应用。');return true}
+ catch(e){setStatus('JSON 无效：'+e.message);return false}
+}
+function selectItem(i){
+ if(!saveDraft()&&messages[selected]!==undefined)return;
+ selected=i;draft=clone(messages[i]);$('#source-editor').value=JSON.stringify(draft,null,2);$('#editor-title').textContent='编辑消息 '+(i+1);renderList();renderPreview(draft);setStatus('正在编辑第 '+(i+1)+' 条消息。')
+}
+function makeButton(label,fn,cls){const b=document.createElement('button');b.type='button';b.textContent=label;if(cls)b.className=cls;b.addEventListener('click',e=>{e.stopPropagation();fn()});return b}
+function renderList(){
+ $('#count').textContent='('+messages.length+')';list.textContent='';
+ if(!messages.length){const p=document.createElement('p');p.className='hint';p.textContent='消息列表为空，点击“新增”创建。';list.appendChild(p);return}
+ messages.forEach((m,i)=>{
+  const card=document.createElement('article');card.className='message-card'+(i===selected?' selected':'');card.tabIndex=0;
+  const top=document.createElement('div');top.className='card-top';const n=document.createElement('span');n.className='number';n.textContent=String(i+1);const t=document.createElement('div');t.className='card-preview';t.textContent=presetLabel(m);top.append(n,t);card.appendChild(top);
+  const actions=document.createElement('div');actions.className='card-actions';
+  actions.append(makeButton('编辑',()=>selectItem(i)),makeButton('模拟播放',()=>{renderPreview(messages[i]);setStatus('已模拟播放第 '+(i+1)+' 条预设。')}),makeButton('复制源码',()=>copyText(JSON.stringify(m,null,2),'已复制第 '+(i+1)+' 条消息源码。')),makeButton('删除',()=>deleteItem(i),'danger'));
+  card.appendChild(actions);card.addEventListener('click',e=>{if(!e.target.closest('button'))selectItem(i)});card.addEventListener('keydown',e=>{if(e.key==='Enter')selectItem(i)});list.appendChild(card)
+ })
+}
+async function copyText(text,msg){try{await navigator.clipboard.writeText(text);setStatus(msg)}catch(e){const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();setStatus(ok?msg:'复制失败，请手动复制。')}}
+function exportSource(){return '/* Echo-Live random marquee presets. Native JSON message structures. */\nwindow.EchoLiveRandomMessages = '+JSON.stringify(messages,null,4)+';\n'}
+function importArray(arr){messages=arr;selected=0;draft=messages.length?clone(messages[0]):'';$('#source-editor').value=messages.length?JSON.stringify(draft,null,2):'""';$('#editor-title').textContent=messages.length?'编辑消息 1':'消息源码';renderList();renderPreview(messages.length?draft:undefined);setStatus('已载入 '+messages.length+' 条预设。')}
+function deleteItem(i){if(!confirm('确定删除第 '+(i+1)+' 条消息？'))return;messages.splice(i,1);selected=Math.min(selected,messages.length-1);if(selected<0)selected=0;draft=messages.length?clone(messages[selected]):'';$('#source-editor').value=messages.length?JSON.stringify(draft,null,2):'""';$('#editor-title').textContent=messages.length?'编辑消息 '+(selected+1):'消息源码';renderList();renderPreview(messages.length?draft:undefined);setStatus('已删除消息。')}
+$('#add-btn').addEventListener('click',()=>{if(messages.length&&!saveDraft())return;messages.push('新消息');selected=messages.length-1;draft=messages[selected];$('#source-editor').value=JSON.stringify(draft,null,2);$('#editor-title').textContent='编辑消息 '+(selected+1);renderList();renderPreview(draft);$('#source-editor').focus()});
+$('#apply-btn').addEventListener('click',saveDraft);
+$('#preview-btn').addEventListener('click',()=>{if(saveDraft())setStatus('预览已刷新。')});
 $('#import-btn').addEventListener('click',()=>$('#file-input').click());
-$('#file-input').addEventListener('change',async e=>{
- const file=e.target.files&&e.target.files[0];if(!file)return;
- try{const imported=parseImported(await file.text());if(!Array.isArray(imported))throw new Error('导入内容必须是数组。');messages=imported;selected=0;draft=messages.length?clone(messages[0]):'';mode='visual';$('#visual-editor').value=typeof draft==='string'?draft:plain(draft);$('#source-editor').value=pretty(draft);$('#editor-title').textContent=messages.length?'编辑消息 1':'编辑消息';renderList();renderPreview(messages.length?draft:undefined);setStatus('已导入 '+messages.length+' 条消息。')}catch(err){setStatus('导入失败：'+err.message)}finally{e.target.value=''}
-});
-$('#save-item-btn').addEventListener('click',saveCurrent);
-$('#visual-mode-btn').addEventListener('click',()=>switchMode('visual'));
-$('#source-mode-btn').addEventListener('click',()=>switchMode('source'));
-$('#preview-btn').addEventListener('click',()=>{if(syncDraftFromPane())renderPreview(draft);setStatus('已刷新模拟预览。')});
-$('#export-btn').addEventListener('click',()=>{if(!saveCurrent()&&messages.length)return;downloadFile('message.js',exportSource());setStatus('已生成 message.js，请在浏览器保存对话框中选择保存位置。')});
-$('#copy-all-btn').addEventListener('click',()=>{if(!saveCurrent()&&messages.length)return;copyText(exportSource(),'已复制完整 message.js 源码。')});
-$('#import-json-btn').addEventListener('click',()=>{$('#import-json').classList.toggle('hidden');$('#import-json-actions').classList.toggle('hidden')});
-$('#cancel-json-btn').addEventListener('click',()=>{$('#import-json').classList.add('hidden');$('#import-json-actions').classList.add('hidden')});
-$('#load-json-btn').addEventListener('click',()=>{try{const a=parseImported($('#import-json').value);if(!Array.isArray(a))throw new Error('内容必须是数组。');messages=a;selected=0;draft=messages.length?clone(messages[0]):'';$('#visual-editor').value=typeof draft==='string'?draft:plain(draft);$('#source-editor').value=pretty(draft);$('#editor-title').textContent=messages.length?'编辑消息 1':'编辑消息';renderList();renderPreview(messages.length?draft:undefined);setStatus('已载入 '+messages.length+' 条消息。')}catch(e){setStatus('载入失败：'+e.message)}});
-function insertAtCursor(text){const el=$('#visual-editor');const start=el.selectionStart,end=el.selectionEnd;el.setRangeText(text,start,end,'select');el.focus();renderRichText(el.value,$('#preview'))}
-document.querySelectorAll('[data-wrap]').forEach(b=>b.addEventListener('click',()=>{
- const code=b.dataset.wrap,el=$('#visual-editor'),start=el.selectionStart,end=el.selectionEnd;
- if(start===end){insertAtCursor(code);return}
- const selectedText=el.value.slice(start,end);el.setRangeText(code+selectedText+'@r',start,end,'select');el.focus();renderRichText(el.value,$('#preview'))
-}));
-$('#insert-color-btn').addEventListener('click',()=>insertAtCursor('@['+$('#color-input').value+']'));
-$('#insert-emoji-btn').addEventListener('click',()=>{const id=prompt('输入 Echo-Live 表情或图片 ID：');if(id)insertAtCursor('@{'+id+'}')});
-$('#insert-class-btn').addEventListener('click',()=>{const name=prompt('输入样式类名（输入 : 开头表示不添加 echo-text- 前缀）：');if(name)insertAtCursor('@<'+name+'>')});
-$('#visual-editor').addEventListener('input',()=>{draft=$('#visual-editor').value;renderRichText(draft,$('#preview'))});
-$('#source-editor').addEventListener('input',()=>{try{draft=parseMessageSource($('#source-editor').value);renderPreview(draft)}catch(e){setStatus('源码尚未构成有效 JSON；完成后可应用修改。')}});
-function init(){
- messages=['欢迎来到直播间！','感谢你的关注与支持！','今天也请多多关照。','祝大家心情愉快！','感谢大家一直以来的陪伴。','记得喝水，适当休息。','希望今天也有值得开心的事情。','欢迎互动，祝你观看愉快！'];
- selected=0;draft=messages[0];$('#visual-editor').value=draft;$('#source-editor').value=pretty(draft);renderList();renderPreview(draft)
-}
-init();
+$('#file-input').addEventListener('change',async e=>{const file=e.target.files&&e.target.files[0];if(!file)return;try{importArray(parseImported(await file.text()))}catch(err){setStatus('导入失败：'+err.message)}finally{e.target.value=''}});
+$('#export-btn').addEventListener('click',()=>{if(messages.length&&!saveDraft())return;const blob=new Blob([exportSource()],{type:'text/javascript;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='message.js';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);setStatus('已生成 message.js，请在浏览器保存对话框中选择保存位置。')});
+$('#copy-all-btn').addEventListener('click',()=>{if(messages.length&&!saveDraft())return;copyText(exportSource(),'已复制完整 message.js 源码。')});
+$('#paste-toggle-btn').addEventListener('click',()=>{$('#paste-area').classList.toggle('hidden');$('#paste-actions').classList.toggle('hidden')});
+$('#cancel-paste-btn').addEventListener('click',()=>{$('#paste-area').classList.add('hidden');$('#paste-actions').classList.add('hidden')});
+$('#load-paste-btn').addEventListener('click',()=>{try{importArray(parseImported($('#paste-area').value));$('#paste-area').classList.add('hidden');$('#paste-actions').classList.add('hidden')}catch(e){setStatus('载入失败：'+e.message)}});
+$('#source-editor').addEventListener('input',()=>{try{draft=JSON.parse($('#source-editor').value);renderPreview(draft)}catch(e){setStatus('正在编辑 JSON…（尚未通过语法验证）')}});
+const initial=[
+ "欢迎来到直播间！",
+ {"name":"欢迎消息（富文本）","text":"感谢你的关注与支持！","style":{"bold":true,"color":"#66CCFF"}},
+ [{"text":"今天也请多多关照。","style":{"bold":true}},{"text":" 祝大家心情愉快！","style":{"italic":true}}],
+ {"name":"欢迎队列示例","messages":[{"message":"欢迎来到直播间！"},{"message":[{"text":"感谢大家的陪伴。","style":{"bold":true,"color":"#66CCFF}}]}]}
+];
+importArray(initial);
 })();
 </script>
 </body>
