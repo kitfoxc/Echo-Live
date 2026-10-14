@@ -1,0 +1,268 @@
+/* ============================================================
+ * Echo-Live — iMessage-style bubble theme
+ * Based on the Echo-Live built-in theme system.
+ * ============================================================ */
+
+@import url("../live-common/base.css");
+@import url("../live-common/font-family.css");
+@import url("../live-common/char-effect.css");
+@import url("../live-common/char-indent.css");
+@import url("../live-common/i18n.css");
+@import url("../live-common/event-effect.css");
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: var(--echo-default-font-family);
+}
+
+:root {
+    --echo-live-content-font-size: 40px;
+    --echo-live-content-color: #FFFFFF;
+    --echo-live-username-font-size: 0.72em;
+    --echo-live-username-color: rgba(255, 255, 255, 0.82);
+    --echo-live-bottom-font-size: 24px;
+    --echo-live-bottom-color: #FFFFFF;
+    --echo-live-username-display: block;
+    --echo-live-bottombar-display: none;
+    --echo-live-bg-color: transparent;
+    --echo-live-border: unset;
+    --echo-live-border-radius: 0;
+    --echo-live-padding: 0;
+    --echo-live-box-shadow-color: transparent;
+    --echo-live-box-shadow-distance: 0;
+    --echo-live-box-shadow-x: 0;
+    --echo-live-box-shadow-y: 0;
+    --echo-live-box-shadow-blur: 0;
+    --echo-live-top: 0;
+    --echo-live-left: 0;
+    --echo-live-bottom: 0;
+    --echo-live-right: 0;
+    --echo-live-history-bg-color: rgba(20, 24, 32, 0.88);
+    --echo-live-history-border: unset;
+    --echo-live-history-border-radius: 18px;
+    --echo-live-history-box-shadow-color: rgba(0, 0, 0, 0.16);
+    --echo-live-history-box-shadow-distance: 8px;
+    --echo-live-history-padding: 1em;
+    --echo-span-color: var(--echo-live-content-color);
+    user-select: none;
+}
+
+/* Blue outgoing-message bubble */
+:root,
+:root[user-custom-color="blue"] {
+    --imessage-bubble-bg: #0A84FF;
+    --imessage-bubble-text: #FFFFFF;
+    --imessage-bubble-shadow: rgba(0, 65, 145, 0.22);
+    --imessage-bubble-tail: #0A84FF;
+}
+
+/* Gray incoming-message bubble */
+:root[user-custom-color="gray"] {
+    --imessage-bubble-bg: #E9E9EB;
+    --imessage-bubble-text: #151518;
+    --imessage-bubble-shadow: rgba(0, 0, 0, 0.12);
+    --imessage-bubble-tail: #E9E9EB;
+    --echo-live-username-color: rgba(21, 21, 24, 0.72);
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: transparent !important;
+}
+
+#echo-live {
+    position: relative;
+    inset: auto;
+    width: 100vw;
+    height: 100vh;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    background: transparent;
+    background-image: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    box-sizing: border-box;
+    opacity: 1;
+    transition: opacity var(--animation-speed-display-hidden, 220ms) ease;
+}
+
+#echo-live.display-hidden {
+    opacity: 0;
+}
+
+#echo-live > .top,
+#echo-live > .bottom {
+    display: none !important;
+}
+
+#echo-live > .center {
+    display: flex;
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+#echo-live .center-left,
+#echo-live .center-right {
+    display: none !important;
+    flex: 0 0 0 !important;
+}
+
+#echo-live .center-center {
+    position: relative;
+    isolation: isolate;
+    display: block;
+    flex: 0 1 auto;
+    width: fit-content;
+    min-width: 0;
+    max-width: min(84vw, 1100px);
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0.72em 1em;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    text-align: center;
+    font-size: var(--echo-live-content-font-size);
+    line-height: 1.28;
+    color: var(--imessage-bubble-text);
+    background: var(--imessage-bubble-bg);
+    border: 0;
+    border-radius: 1.15em;
+    box-shadow: 0 0.16em 0.55em var(--imessage-bubble-shadow);
+    transform-origin: 80% 100%;
+    /* Hidden until the content observer marks the bubble active. */
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(0.35em) scale(0.94);
+    filter: blur(2px);
+    transition:
+        opacity 220ms ease,
+        transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        filter 220ms ease,
+        visibility 0s linear 220ms;
+}
+
+/* Any actual output mutation restarts this entrance animation. */
+#echo-live .center-center.imessage-content-active {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: none;
+    transition: none;
+    animation: imessage-bubble-pop 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Animate away before display_hidden clears the old message. */
+#echo-live.display-hidden .center-center {
+    opacity: 0;
+    transform: translateY(-0.3em) scale(0.94);
+    filter: blur(2px);
+    visibility: hidden;
+    transition:
+        opacity var(--animation-speed-display-hidden, 220ms) ease,
+        transform var(--animation-speed-display-hidden, 220ms) cubic-bezier(0.2, 0.8, 0.2, 1),
+        filter var(--animation-speed-display-hidden, 220ms) ease,
+        visibility 0s linear var(--animation-speed-display-hidden, 220ms);
+}
+
+/* Rounded tail: kept inside the bubble's visual footprint to avoid clipping. */
+#echo-live .center-center::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    right: 0.05em;
+    bottom: 0.04em;
+    width: 0.72em;
+    height: 0.72em;
+    background: var(--imessage-bubble-tail);
+    border-bottom-right-radius: 0.68em;
+    clip-path: polygon(0 0, 100% 100%, 12% 76%);
+    transform: translate(0.12em, 0.12em) rotate(4deg);
+}
+
+#echo-live .name {
+    display: var(--echo-live-username-display);
+    position: relative;
+    margin: 0 0 0.28em;
+    padding: 0;
+    color: var(--echo-live-username-color);
+    font-size: var(--echo-live-username-font-size);
+    line-height: 1.15;
+    text-align: center;
+}
+
+#echo-live .name:empty {
+    display: none;
+}
+
+#echo-live .content {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    color: inherit;
+    text-align: center;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+#echo-live .content img,
+#echo-live .content video {
+    max-width: 100%;
+    height: auto;
+    vertical-align: middle;
+}
+
+#echo-live .controller,
+#echo-live .typing-message {
+    display: none !important;
+}
+
+/* Slightly more compact sizing on narrow browser sources. */
+@media (max-width: 700px) {
+    #echo-live .center-center {
+        max-width: 88vw;
+        padding: 0.68em 0.9em;
+        border-radius: 1.05em;
+    }
+}
+
+@keyframes imessage-bubble-pop {
+    0% {
+        opacity: 0;
+        transform: translateY(0.55em) scale(0.82);
+        filter: blur(2px);
+    }
+    65% {
+        opacity: 1;
+        transform: translateY(-0.06em) scale(1.035);
+        filter: blur(0);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #echo-live .center-center.imessage-content-active {
+        animation: none;
+        transition: none;
+    }
+    #echo-live .center-center,
+    #echo-live.display-hidden .center-center {
+        transition: none;
+    }
+}

@@ -94,10 +94,48 @@ function setUsername(name = '') {
     $('#echo-live .name').html(name.replace(/ /g, '&ensp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
 }
 
+/*
+ * iMessage theme animation bridge.
+ * Watch actual rendered output so any text/content mutation restarts the
+ * bubble entrance animation. The CSS class is harmless for other themes.
+ */
+function refreshIMessageBubbleAnimation() {
+    const output = document.querySelector('#echo-live .echo-output');
+    const bubble = document.querySelector('#echo-live .center-center');
+    if (!output || !bubble) return;
+
+    const hasContent = output.textContent.trim().length > 0
+        || output.querySelector('img, video, .echo-emoji-icon, br, ruby') !== null;
+
+    bubble.classList.remove('imessage-content-active');
+    if (!hasContent) return;
+
+    // Force a style/layout boundary so re-adding the class restarts keyframes.
+    void bubble.offsetWidth;
+    bubble.classList.add('imessage-content-active');
+}
+
+function observeIMessageBubbleContent() {
+    const output = document.querySelector('#echo-live .echo-output');
+    if (!output || typeof MutationObserver === 'undefined') return;
+
+    const observer = new MutationObserver(() => {
+        refreshIMessageBubbleAnimation();
+    });
+    observer.observe(output, {
+        subtree: true,
+        childList: true,
+        characterData: true
+    });
+    refreshIMessageBubbleAnimation();
+}
+
+
 
 
 
 $(document).ready(function() {
+    observeIMessageBubbleContent();
     translator.ready(() => {
         emojiHako = new EmojiHako();
         if (config.echolive.layout.diplay_controller) echolive.setController(config.echolive.layout.controller || '');

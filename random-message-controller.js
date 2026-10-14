@@ -23,9 +23,29 @@
 
     function setStatus(message) { statusEl.textContent = message; }
     function setInputHint(message) { if (inputHintEl) inputHintEl.textContent = '输入提示：' + message; }
+    // Rich-text messages may be strings, Echo paragraph objects, or arrays of
+    // formatted segments returned by EchoLiveTools.formattingCodeToMessage().
+    // Keep the original structure for sendData(); only flatten it for previews
+    // and timing calculations.
+    function messageText(message) {
+        if (typeof message === 'string') return message;
+        if (Array.isArray(message)) return message.map(messageText).join('');
+        if (message && typeof message === 'object') {
+            if (typeof message.text === 'string') return message.text;
+            if (typeof message.typewrite === 'string') return message.typewrite;
+        }
+        return '';
+    }
+    function normalizePreset(message) {
+        if (typeof message === 'string') return message.trim() ? message : null;
+        if (Array.isArray(message) || (message && typeof message === 'object')) {
+            return messageText(message).trim() ? message : null;
+        }
+        return null;
+    }
     function presets() {
         return Array.isArray(window.EchoLiveRandomMessages)
-            ? window.EchoLiveRandomMessages.map(s => String(s).trim()).filter(Boolean)
+            ? window.EchoLiveRandomMessages.map(normalizePreset).filter(message => message !== null)
             : [];
     }
     function renderPresets() {
@@ -42,7 +62,7 @@
         list.className = 'random-message-items';
         all.forEach(message => {
             const item = document.createElement('li');
-            item.textContent = message;
+            item.textContent = messageText(message);
             list.appendChild(item);
         });
         listEl.appendChild(list);
@@ -60,7 +80,7 @@
         if (!all.length) throw new Error('消息库为空，请在 message.js 中至少配置一条消息。');
         if (!bag.length) {
             bag = shuffle(all);
-            if (bag.length > 1 && bag[0] === lastMessage) [bag[0], bag[1]] = [bag[1], bag[0]];
+            if (bag.length > 1 && messageText(bag[0]) === lastMessage) [bag[0], bag[1]] = [bag[1], bag[0]];
         }
         return bag.pop();
     }
@@ -74,8 +94,8 @@
             return false;
         }
         elb.sendData({ username: '', messages: [{ message }] });
-        lastMessage = message;
-        if (lastEl) lastEl.textContent = message;
+        lastMessage = messageText(message);
+        if (lastEl) lastEl.textContent = lastMessage;
         return true;
     }
     function sendRandom() {
@@ -90,13 +110,14 @@
         }
     }
     function delayForMessage(message) {
+        const text = messageText(message);
         const base = Math.max(5, Number($('#random-message-interval').value) || 180) * 1000;
         const jitterValue = Number($('#random-message-jitter').value);
         const jitter = Math.max(0, Math.min(100, Number.isFinite(jitterValue) ? jitterValue : 20)) / 100;
         const charValue = Number($('#random-message-char-delay').value);
         const perChar = Math.max(0, Number.isFinite(charValue) ? charValue : 35);
         const randomFactor = 1 + (Math.random() * 2 - 1) * jitter;
-        return Math.max(1000, Math.round(base * randomFactor + [...message].length * perChar));
+        return Math.max(1000, Math.round(base * randomFactor + [...text].length * perChar));
     }
     function clearSchedule() {
         clearTimeout(timer);
