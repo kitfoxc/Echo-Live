@@ -93,6 +93,7 @@ body {
     box-shadow: none;
     box-sizing: border-box;
     opacity: 1;
+    transition: opacity var(--animation-speed-display-hidden, 220ms) ease;
 }
 
 #echo-live.display-hidden {
