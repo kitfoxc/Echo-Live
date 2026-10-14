@@ -53,6 +53,7 @@ let inRuby = false;
 
 
 let messageLenB = 0;
+let messageDisplayLength = 0;
 
 
 
@@ -124,6 +125,7 @@ echo.on('next', function(msg) {
 
     let str = EchoLiveTools.getMessagePlainText(msg.message);
     messageLenB = new TextEncoder().encode(str).length;
+    messageDisplayLength = [...str].length;
 
     // 判断文字书写方向
     $('.echo-output').removeClass('echo-text-rlo');
@@ -207,16 +209,23 @@ echo.on('printEnd', function() {
     } catch (_) {
         duration = 0;
     }
+    // 队列中每条消息至少显示一段与文本长度成正比的时间。
+    // 按 Unicode 字符计数，避免中文因 UTF-8 字节数而被过度放大。
+    const queueDisplayDelay = Math.max(1200, messageDisplayLength * 75);
+
     if (config.echolive.display.auto) {
-        echolive.setDisplayHiddenWaitTimer(messageLenB * 1000 * config.echolive.display.long_text_compensation_rate - duration);
+        const autoHideDelay = messageLenB * 1000 * config.echolive.display.long_text_compensation_rate - duration;
+        echolive.setDisplayHiddenWaitTimer(echo.messageList.length > 0
+            ? Math.max(autoHideDelay, queueDisplayDelay)
+            : autoHideDelay);
     }
 
     if (messageActions.printEnd === 'next') {
         messageActions.printEnd = undefined;
-        echo.scheduleQueueAdvance(true);
+        echo.scheduleQueueAdvance(true, queueDisplayDelay);
     } else if (echo.messageList.length > 0) {
-        // 统一调度队列推进，避免新批次到达时重复 next() 导致跳过消息。
-        echo.scheduleQueueAdvance();
+        // 当前消息保持显示到按文本长度计算的时间结束，再播放下一条。
+        echo.scheduleQueueAdvance(false, queueDisplayDelay);
     }
 });
 
