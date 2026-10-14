@@ -32,7 +32,7 @@
 单条富文本：<code>{"text":"欢迎","style":{"bold":true,"color":"#66CCFF"}}</code><br>
 多文本段落：<code>[{"text":"第一段","style":{"bold":true}},{"text":"第二段","pause":8}]</code><br>
 消息队列：<code>{"name":"欢迎队列","messages":[{"message":"第一条"},{"message":[{"text":"第二条","style":{"italic":true}}]}]}</code><br>
-原生段落字段可包含 <code>class</code>、<code>style</code>、<code>data</code>、<code>typewrite</code>、<code>ruby</code>、<code>pause</code>、<code>speed</code>、<code>event</code> 等。队列中每项使用 Echo-Live 消息信封 <code>{"message": ...}</code>。
+原生段落字段可包含 <code>class</code>、<code>data</code>、<code>typewrite</code>、<code>ruby</code>、<code>pause</code>、<code>speed</code>、<code>event</code> 等。<code>style</code> 支持源项目注册的 <code>color</code>、<code>backgroundColor</code>、<code>bold</code>、<code>italic</code>、<code>underline</code>、<code>strikethrough</code>、<code>size</code>、<code>weight</code>、<code>stretch</code>、<code>letterSpacing</code>、<code>emphasis</code>、<code>shadow</code> 及自定义 <code>style</code>。队列中每项使用 Echo-Live 消息信封 <code>{"message": ...}</code>。
 </div>
 <div class="preview-label"><span>模拟播放预览</span><button id="preview-btn">刷新预览</button></div>
 <div id="preview" aria-live="polite"></div>
