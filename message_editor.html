@@ -90,6 +90,7 @@ function syncDraftFromPane(){
 }
 function switchMode(next){
  if(!syncDraftFromPane()&&next!==mode)return;
+ if(next==='visual'&&mode==='source'&&typeof draft!=='string'&&!confirm('当前消息是原生对象/数组格式。切换到快速格式化编辑会将其转换为纯文本字符串，可能丢失 pause、typewrite、style 等字段。仍要转换吗？'))return;
  mode=next;
  $('#visual-pane').classList.toggle('hidden',mode!=='visual');
  $('#source-pane').classList.toggle('hidden',mode!=='source');
@@ -163,7 +164,7 @@ function renderList(){
   const card=document.createElement('article');card.className='message-card'+(i===selected?' selected':'');card.tabIndex=0;
   const top=document.createElement('div');top.className='card-top';const n=document.createElement('span');n.className='number';n.textContent=String(i+1);const text=document.createElement('div');text.className='card-preview';text.textContent=plain(m)||'（空消息）';top.append(n,text);card.appendChild(top);
   const actions=document.createElement('div');actions.className='card-actions';
-  const edit=button('编辑',()=>selectItem(i));const play=button('模拟播放',()=>{selected=i;draft=clone(messages[i]);renderList();renderPreview(draft);$('#editor-title').textContent='模拟播放：消息 '+(i+1);setStatus('已模拟播放第 '+(i+1)+' 条消息。')});
+  const edit=button('编辑',()=>selectItem(i));const play=button('模拟播放',()=>{renderPreview(messages[i]);setStatus('已模拟播放第 '+(i+1)+' 条消息。')});
   const copy=button('复制源码',()=>copyText(pretty(m),'已复制第 '+(i+1)+' 条消息的源码。'));const del=button('删除',()=>deleteItem(i),'danger');
   actions.append(edit,play,copy,del);card.appendChild(actions);card.addEventListener('click',e=>{if(!e.target.closest('button'))selectItem(i)});card.addEventListener('keydown',e=>{if(e.key==='Enter')selectItem(i)});list.appendChild(card)
  })
