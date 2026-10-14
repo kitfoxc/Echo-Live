@@ -18,6 +18,7 @@
     <script src="lib/markdown/marked.min.js"></script>
     <script src="res/script/config-load-fail.js"></script>
     <script src="config.js" onerror="configLoadFail()"></script>
+    <script src="message.js"></script>
     <script src="app.js"></script>
     <script src="res/class/EchoLiveSystem.js"></script>
     <script src="res/data/root.js"></script>
@@ -105,15 +106,14 @@
                 <span id="log-message-mark" class="hide" aria-hidden="true">1</span>
             </button>
             <button
-                class="tabpage-nav-item hide"
+                id="tabpage-nav-broadcast"
+                class="tabpage-nav-item"
                 data-pageid="broadcast"
                 role="tab"
                 aria-selected="false"
                 accesskey="5"
-                title="广播控制 [alt+5]"
-                data-i18n="editor.tabpage.broadcast.title"
-                data-i18n-title="editor.tabpage.broadcast.description"
-            >广播</button>
+                title="随机消息控制 [alt+5]"
+            >随机消息</button>
         </nav>
         <!-- 标签页面板 -->
         <div class="tabpage-centent" data-navid="main">
@@ -588,12 +588,42 @@
                 
             </section>
 
-            <!-- 广播标签页 -->
+            <!-- 随机跑马灯消息控制 -->
             <section class="tabpage-panel hide" role="tabpanel" data-pageid="broadcast" aria-labelledby="tabpage-panel-title-broadcast">
-                <h2 class="tabpage-panel-title" id="tabpage-panel-title-broadcast" data-i18n="editor.tabpage.broadcast.title">广播</h2>
-                <p style="color: red;">该页面正在施工中，暂不可用。</p>
-                <p>恭喜你发现了隐藏页面：广播！</p>
-                <p>这里计划添加一些功能按键用于控制对话框。</p>
+                <h2 class="tabpage-panel-title" id="tabpage-panel-title-broadcast">随机消息控制</h2>
+                <div class="echo-editor-form" id="random-message-panel">
+                    <p>每行一条预设消息。随机消息默认不显示说话人；每轮抽取不重复，全部抽完后自动重新洗牌。</p>
+                    <div class="echo-editor-form-row">
+                        <label for="random-message-list">预设消息库</label>
+                        <textarea id="random-message-list" rows="8" spellcheck="false" placeholder="每行输入一条消息"></textarea>
+                    </div>
+                    <div class="fh-flex-row" style="gap:.5rem;flex-wrap:wrap;margin:.5rem 0;">
+                        <button type="button" id="random-message-save" class="fh-button">保存消息库</button>
+                        <button type="button" id="random-message-send" class="fh-button">随机发送一条</button>
+                        <button type="button" id="random-message-start" class="fh-button">启动自动发送</button>
+                        <button type="button" id="random-message-stop" class="fh-button">停止自动发送</button>
+                    </div>
+                    <div class="echo-editor-form-row">
+                        <label for="random-message-interval">固定间隔（秒）</label>
+                        <input type="number" id="random-message-interval" value="180" min="5" max="86400" step="1">
+                    </div>
+                    <div class="echo-editor-form-row">
+                        <label for="random-message-jitter">随机浮动（百分比）</label>
+                        <input type="number" id="random-message-jitter" value="20" min="0" max="100" step="1">
+                    </div>
+                    <div class="echo-editor-form-row">
+                        <label for="random-message-char-delay">每字符追加间隔（毫秒）</label>
+                        <input type="number" id="random-message-char-delay" value="35" min="0" max="2000" step="5">
+                    </div>
+                    <div class="echo-editor-form-row">
+                        <label for="random-message-pause-delay">手动输入后恢复等待（秒）</label>
+                        <input type="number" id="random-message-pause-delay" value="5" min="1" max="600" step="1">
+                    </div>
+                    <p>状态：<strong id="random-message-status" role="status" aria-live="polite">等待初始化</strong></p>
+                    <p>倒计时：<strong id="random-message-countdown">未启动</strong></p>
+                    <p>最近发送：<span id="random-message-last">暂无</span></p>
+                    <p style="font-size:var(--font-size-small);color:var(--text-secondary);">自动发送期间，如果编辑器进入手动输入状态，将暂停发送；连续空闲达到恢复等待时间后继续。需启用 Echo-Live 广播功能。</p>
+                </div>
             </section>
 
             <!-- 日志标签页 -->
@@ -621,5 +651,6 @@
     <script>
         echoLiveSystem.loader.init('background.editor');
     </script>
+    <script src="random-message-controller.js"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 const config = {
-    "data_version": 16,
+    "data_version": 17,
     "global": {
         "language": "zho-Hans",
         "theme": "vanilla",
@@ -16,6 +16,7 @@ const config = {
         "html_format_enable": true
     },
     "echolive": {
+        "print_animation_disable": false,
         "style": {
             "live_theme": "",
             "live_theme_variant": "",

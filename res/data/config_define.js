@@ -1,4 +1,4 @@
-const db_config_version = 16;
+const db_config_version = 17;
 
 const db_config_define = [
     {
@@ -551,6 +551,12 @@ const db_config_define = [
             min: 0,
             step: 100
         }
+    }, {
+        name: 'echolive.print_animation_disable',
+        icon: 'material:animation-play',
+        type: 'boolean',
+        default: false,
+        created: 17
     }, {
         name: 'echolive.typing',
         icon: 'material:chat-processing',

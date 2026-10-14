@@ -18,7 +18,7 @@ echolive.setThemeVariant(urlThemeVariant || config.echolive.style.live_theme_var
 
 $('html').css('--animation-speed-display-hidden', config.echolive.display.hidden_time + 'ms');
 $('html').css('--animation-speed-display-show', config.echolive.display.show_time + 'ms');
-$('html').css('--char-effect-name', config.echolive.print_effect.name);
+$('html').css('--char-effect-name', config.echolive.print_animation_disable ? 'none' : config.echolive.print_effect.name);
 $('html').css('--char-effect-speed', config.echolive.print_effect.duration + 'ms');
 $('html').css('--char-effect-scale', config.echolive.print_effect.scale);
 $('html').css('--char-effect-timing-function', config.echolive.print_effect.timing_function);
@@ -213,7 +213,10 @@ echo.on('printEnd', function() {
 
     if (messageActions.printEnd === 'next') {
         messageActions.printEnd = undefined;
-        echo.next();
+        setTimeout(() => echo.next(), 0);
+    } else if (echo.messageList.length > 0) {
+        // 自动播放队列；延迟到当前 print() 调用完成后，避免旧消息的状态覆盖下一条。
+        setTimeout(() => echo.next(), 0);
     }
 });
 
@@ -369,12 +372,17 @@ echolive.on('display_show', function(callback) {
 echolive.on('display_hidden', function(callback) {
     $('#echo-live, body').addClass('display-hidden');
     setTimeout(() => {
+        // 隐藏动画结束后清空旧文本，避免下次显示时残留上一条消息。
+        $('.echo-output').empty();
+        $('.name').empty();
         callback();
     }, config.echolive.display.hidden_time);
 });
 
 echolive.on('display_hidden_now', function() {
     $('#echo-live, body').addClass('display-hidden');
+    $('.echo-output').empty();
+    $('.name').empty();
 });
 
 echolive.on('controller_load', function(controller) {
