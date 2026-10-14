@@ -141,14 +141,39 @@ body {
     border-radius: 1.15em;
     box-shadow: 0 0.16em 0.55em var(--imessage-bubble-shadow);
     transform-origin: 80% 100%;
-    /* The bubble is revealed only when its content has actually started rendering. */
+    /* Hidden until the content observer marks the bubble active. */
     visibility: hidden;
+    opacity: 0;
+    transform: translateY(0.35em) scale(0.94);
+    filter: blur(2px);
+    transition:
+        opacity 220ms ease,
+        transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        filter 220ms ease,
+        visibility 0s linear 220ms;
 }
 
-/* :has() toggles on each clear -> first rendered character, restarting the pop animation. */
-#echo-live .center-center:has(.content .echo-chr, .content img, .content video, .content .echo-emoji-icon, .content br, .content ruby) {
+/* Any actual output mutation restarts this entrance animation. */
+#echo-live .center-center.imessage-content-active {
     visibility: visible;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: none;
+    transition: none;
     animation: imessage-bubble-pop 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Animate away before display_hidden clears the old message. */
+#echo-live.display-hidden .center-center {
+    opacity: 0;
+    transform: translateY(-0.3em) scale(0.94);
+    filter: blur(2px);
+    visibility: hidden;
+    transition:
+        opacity var(--animation-speed-display-hidden, 220ms) ease,
+        transform var(--animation-speed-display-hidden, 220ms) cubic-bezier(0.2, 0.8, 0.2, 1),
+        filter var(--animation-speed-display-hidden, 220ms) ease,
+        visibility 0s linear var(--animation-speed-display-hidden, 220ms);
 }
 
 /* Rounded tail: kept inside the bubble's visual footprint to avoid clipping. */
@@ -231,7 +256,12 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #echo-live .center-center:has(.content .echo-chr, .content img, .content video, .content .echo-emoji-icon, .content br, .content ruby) {
+    #echo-live .center-center.imessage-content-active {
         animation: none;
+        transition: none;
+    }
+    #echo-live .center-center,
+    #echo-live.display-hidden .center-center {
+        transition: none;
     }
 }
