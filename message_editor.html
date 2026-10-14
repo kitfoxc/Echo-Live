@@ -107,7 +107,7 @@ function renderRichText(text,container){
  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
  function span(s){if(!s)return;let css=[];if(state.bold)css.push('font-weight:700');if(state.italic)css.push('font-style:italic');let dec=[];if(state.underline)dec.push('underline');if(state.strike)dec.push('line-through');if(dec.length)css.push('text-decoration:'+dec.join(' '));if(state.color)css.push('color:'+state.color);if(state.size)css.push('font-size:'+Math.max(.65,Math.min(1.8,1+state.size*.12))+'em');let cls=state.classes.map(c=>'echo-text-'+c).join(' ');html+='<span'+(css.length?' style="'+css.join(';')+'"':'')+(cls?' class="'+esc(cls)+'"':'')+'>'+esc(s)+'</span>'}
  while(i<text.length){
-  if(text[i]==='\'&&text[i+1]==='@'){span('@');i+=2;continue}
+  if(text[i]==='\\'&&text[i+1]==='@'){span('@');i+=2;continue}
   if(text[i]==='@'){
    let rest=text.slice(i),m;
    if((m=rest.match(/^@\[([#a-fA-F0-9]{3,8})\]/))){state.color=m[1].startsWith('#')?m[1]:'#'+m[1];i+=m[0].length;continue}
