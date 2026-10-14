@@ -9,6 +9,7 @@
     const statusEl = $('#random-message-status');
     const countdownEl = $('#random-message-countdown');
     const lastEl = $('#random-message-last');
+    const inputHintEl = $('#random-message-input-hint');
     if (!listEl || !statusEl) return;
 
     let timer = 0;
@@ -21,6 +22,7 @@
     let lastMessage = '';
 
     function setStatus(message) { statusEl.textContent = message; }
+    function setInputHint(message) { if (inputHintEl) inputHintEl.textContent = '输入提示：' + message; }
     function presets() {
         return Array.isArray(window.EchoLiveRandomMessages)
             ? window.EchoLiveRandomMessages.map(s => String(s).trim()).filter(Boolean)
@@ -146,6 +148,7 @@
         clearTimeout(resumeTimer);
         if (countdownEl) countdownEl.textContent = '已暂停';
         setStatus('检测到编辑器输入提示/手动输入，自动发送已暂停。');
+        setInputHint('正在输入，自动发送已暂停');
         const secondsValue = Number($('#random-message-pause-delay').value);
         const seconds = Math.max(1, Number.isFinite(secondsValue) && secondsValue > 0 ? secondsValue : 5);
         resumeTimer = setTimeout(() => {
@@ -157,13 +160,18 @@
             }
             paused = false;
             setStatus('输入提示已关闭，自动发送已恢复。');
+            setInputHint('当前空闲，自动发送已恢复');
             scheduleNext();
         }, seconds * 1000);
     }
     function refreshInputState() {
         if (manualInputActive()) {
+            setInputHint('正在输入');
             pauseForManualInput();
-        } else if (active && paused) {
+        } else {
+            setInputHint('当前空闲');
+        }
+        if (!manualInputActive() && active && paused) {
             clearTimeout(resumeTimer);
             const secondsValue = Number($('#random-message-pause-delay').value);
             const seconds = Math.max(1, Number.isFinite(secondsValue) && secondsValue > 0 ? secondsValue : 5);
@@ -172,6 +180,7 @@
                 if (manualInputActive()) return;
                 paused = false;
                 setStatus('输入提示已关闭，自动发送已恢复。');
+                setInputHint('当前空闲，自动发送已恢复');
                 scheduleNext();
             }, seconds * 1000);
         }
