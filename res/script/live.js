@@ -18,7 +18,7 @@ echolive.setThemeVariant(urlThemeVariant || config.echolive.style.live_theme_var
 
 $('html').css('--animation-speed-display-hidden', config.echolive.display.hidden_time + 'ms');
 $('html').css('--animation-speed-display-show', config.echolive.display.show_time + 'ms');
-$('html').css('--char-effect-name', config.echolive.print_effect.name);
+$('html').css('--char-effect-name', config.echolive.print_animation_disable ? 'none' : config.echolive.print_effect.name);
 $('html').css('--char-effect-speed', config.echolive.print_effect.duration + 'ms');
 $('html').css('--char-effect-scale', config.echolive.print_effect.scale);
 $('html').css('--char-effect-timing-function', config.echolive.print_effect.timing_function);
