@@ -294,8 +294,16 @@ class Echo {
             this.printSpeedChange = this.printSpeed;
         }
         if (data?.customData) this.event.customData(data.customData);
-        this.timer = setInterval(this.print, this.printSpeedStart, this);
         this.state = 'ready';
+        if (typeof config !== 'undefined' && config?.echolive?.print_animation_disable === true) {
+            // 通过现有打印器同步消费缓冲区，保留分组、特殊序列及 printStart/printEnd 事件。
+            let guard = 0;
+            while (this.state !== 'stop' && guard++ < 100000) this.print(this);
+            clearInterval(this.timer);
+            this.timer = 0;
+        } else {
+            this.timer = setInterval(this.print, this.printSpeedStart, this);
+        }
         return this.message;
     }
 

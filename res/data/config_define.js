@@ -552,6 +552,12 @@ const db_config_define = [
             step: 100
         }
     }, {
+        name: 'echolive.print_animation_disable',
+        icon: 'material:animation-play',
+        type: 'boolean',
+        default: false,
+        created: 17
+    }, {
         name: 'echolive.typing',
         icon: 'material:chat-processing',
         type: 'object',
