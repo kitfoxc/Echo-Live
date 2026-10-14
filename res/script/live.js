@@ -18,7 +18,7 @@ echolive.setThemeVariant(urlThemeVariant || config.echolive.style.live_theme_var
 
 $('html').css('--animation-speed-display-hidden', config.echolive.display.hidden_time + 'ms');
 $('html').css('--animation-speed-display-show', config.echolive.display.show_time + 'ms');
-$('html').css('--char-effect-name', config.echolive.print_animation_disable ? 'none' : config.echolive.print_effect.name);
+$('html').css('--char-effect-name', config.echo.print_animation_disable ? 'none' : config.echolive.print_effect.name);
 $('html').css('--char-effect-speed', config.echolive.print_effect.duration + 'ms');
 $('html').css('--char-effect-scale', config.echolive.print_effect.scale);
 $('html').css('--char-effect-timing-function', config.echolive.print_effect.timing_function);
@@ -213,10 +213,10 @@ echo.on('printEnd', function() {
 
     if (messageActions.printEnd === 'next') {
         messageActions.printEnd = undefined;
-        setTimeout(() => echo.next(), 0);
+        echo.scheduleQueueAdvance(true);
     } else if (echo.messageList.length > 0) {
-        // 自动播放队列；延迟到当前 print() 调用完成后，避免旧消息的状态覆盖下一条。
-        setTimeout(() => echo.next(), 0);
+        // 统一调度队列推进，避免新批次到达时重复 next() 导致跳过消息。
+        echo.scheduleQueueAdvance();
     }
 });
 

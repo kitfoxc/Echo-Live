@@ -1,13 +1,15 @@
-/* Echo-Live random marquee message controller. */
+/* Echo-Live random marquee message controller.
+ * Presets are intentionally loaded only from message.js.
+ */
 (function () {
     'use strict';
 
-    const STORAGE_KEY = 'echolive.randomMessages.v1';
     const $ = (selector) => document.querySelector(selector);
     const listEl = $('#random-message-list');
     const statusEl = $('#random-message-status');
     const countdownEl = $('#random-message-countdown');
     const lastEl = $('#random-message-last');
+    const inputHintEl = $('#random-message-input-hint');
     if (!listEl || !statusEl) return;
 
     let timer = 0;
@@ -20,8 +22,30 @@
     let lastMessage = '';
 
     function setStatus(message) { statusEl.textContent = message; }
+    function setInputHint(message) { if (inputHintEl) inputHintEl.textContent = '输入提示：' + message; }
     function presets() {
-        return listEl.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+        return Array.isArray(window.EchoLiveRandomMessages)
+            ? window.EchoLiveRandomMessages.map(s => String(s).trim()).filter(Boolean)
+            : [];
+    }
+    function renderPresets() {
+        const all = presets();
+        listEl.textContent = '';
+        if (!all.length) {
+            const empty = document.createElement('p');
+            empty.className = 'random-message-empty';
+            empty.textContent = 'message.js 中尚未配置消息。';
+            listEl.appendChild(empty);
+            return;
+        }
+        const list = document.createElement('ol');
+        list.className = 'random-message-items';
+        all.forEach(message => {
+            const item = document.createElement('li');
+            item.textContent = message;
+            list.appendChild(item);
+        });
+        listEl.appendChild(list);
     }
     function shuffle(items) {
         const a = items.slice();
@@ -33,7 +57,7 @@
     }
     function nextMessage() {
         const all = presets();
-        if (!all.length) throw new Error('消息库为空，请至少添加一条消息。');
+        if (!all.length) throw new Error('消息库为空，请在 message.js 中至少配置一条消息。');
         if (!bag.length) {
             bag = shuffle(all);
             if (bag.length > 1 && bag[0] === lastMessage) [bag[0], bag[1]] = [bag[1], bag[0]];
@@ -49,7 +73,6 @@
             setStatus('编辑器广播尚未初始化，请稍后重试。');
             return false;
         }
-        // 空用户名让随机消息默认不显示说话人。
         elb.sendData({ username: '', messages: [{ message }] });
         lastMessage = message;
         if (lastEl) lastEl.textContent = message;
@@ -68,9 +91,11 @@
     }
     function delayForMessage(message) {
         const base = Math.max(5, Number($('#random-message-interval').value) || 180) * 1000;
-        const jitter = Math.max(0, Math.min(100, Number($('#random-message-jitter').value) || 0)) / 100;
+        const jitterValue = Number($('#random-message-jitter').value);
+        const jitter = Math.max(0, Math.min(100, Number.isFinite(jitterValue) ? jitterValue : 20)) / 100;
+        const charValue = Number($('#random-message-char-delay').value);
+        const perChar = Math.max(0, Number.isFinite(charValue) ? charValue : 35);
         const randomFactor = 1 + (Math.random() * 2 - 1) * jitter;
-        const perChar = Math.max(0, Number($('#random-message-char-delay').value) || 0);
         return Math.max(1000, Math.round(base * randomFactor + [...message].length * perChar));
     }
     function clearSchedule() {
@@ -79,7 +104,7 @@
         timer = 0;
         countdownTimer = 0;
         dueAt = 0;
-        if (countdownEl) countdownEl.textContent = '已暂停';
+        if (countdownEl) countdownEl.textContent = paused ? '已暂停' : '未安排';
     }
     function scheduleNext() {
         clearSchedule();
@@ -107,72 +132,91 @@
             scheduleNext();
         }, delay);
     }
-    function start() {
-        if (active) return;
-        active = true;
-        paused = false;
-        setStatus('自动发送已启动。');
-        scheduleNext();
+    function promptVisible() {
+        const panel = $('#commander-input-panel');
+        return !!panel && !panel.classList.contains('hide') && panel.getClientRects().length > 0;
     }
-    function stop() {
-        active = false;
-        paused = false;
-        clearSchedule();
-        clearTimeout(resumeTimer);
-        if (countdownEl) countdownEl.textContent = '未启动';
-        setStatus('自动发送已停止。');
+    function manualInputActive() {
+        const focused = document.activeElement;
+        return promptVisible()
+            || (focused && (focused.matches('#output-content') || focused.matches('#commander-input')));
     }
     function pauseForManualInput() {
         if (!active) return;
         paused = true;
         clearSchedule();
         clearTimeout(resumeTimer);
-        setStatus('检测到手动输入，自动发送已暂停。');
-        const seconds = Math.max(1, Number($('#random-message-pause-delay').value) || 5);
+        if (countdownEl) countdownEl.textContent = '已暂停';
+        setStatus('检测到编辑器输入提示/手动输入，自动发送已暂停。');
+        setInputHint('正在输入，自动发送已暂停');
+        const secondsValue = Number($('#random-message-pause-delay').value);
+        const seconds = Math.max(1, Number.isFinite(secondsValue) && secondsValue > 0 ? secondsValue : 5);
         resumeTimer = setTimeout(() => {
             if (!active) return;
+            // 以输入提示面板和当前焦点为准；仍处于输入状态时继续暂停。
+            if (manualInputActive()) {
+                pauseForManualInput();
+                return;
+            }
             paused = false;
-            setStatus('手动输入结束，自动发送已恢复。');
+            setStatus('输入提示已关闭，自动发送已恢复。');
+            setInputHint('当前空闲，自动发送已恢复');
             scheduleNext();
         }, seconds * 1000);
     }
-
-    $('#random-message-save').addEventListener('click', () => {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(presets()));
-            bag = [];
-            setStatus('消息库已保存到当前浏览器。');
-        } catch (_) {
-            setStatus('保存失败：浏览器可能禁止了本地存储。');
+    function refreshInputState() {
+        if (manualInputActive()) {
+            setInputHint('正在输入');
+            pauseForManualInput();
+        } else {
+            setInputHint('当前空闲');
         }
-    });
-    $('#random-message-send').addEventListener('click', sendRandom);
-    $('#random-message-start').addEventListener('click', start);
-    $('#random-message-stop').addEventListener('click', stop);
-    listEl.addEventListener('input', () => { bag = []; });
-
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        const messages = saved ? JSON.parse(saved) : window.EchoLiveRandomMessages;
-        listEl.value = Array.isArray(messages) ? messages.join('\n') : '';
-    } catch (_) {
-        listEl.value = (window.EchoLiveRandomMessages || []).join('\n');
+        if (!manualInputActive() && active && paused) {
+            clearTimeout(resumeTimer);
+            const secondsValue = Number($('#random-message-pause-delay').value);
+            const seconds = Math.max(1, Number.isFinite(secondsValue) && secondsValue > 0 ? secondsValue : 5);
+            resumeTimer = setTimeout(() => {
+                if (!active) return;
+                if (manualInputActive()) return;
+                paused = false;
+                setStatus('输入提示已关闭，自动发送已恢复。');
+                setInputHint('当前空闲，自动发送已恢复');
+                scheduleNext();
+            }, seconds * 1000);
+        }
     }
 
-    // 仅监听主编辑器的输入区域，不监听随机消息设置区，避免配置操作误暂停。
-    document.addEventListener('focusin', (event) => {
-        if (event.target && (event.target.matches('#output-content') || event.target.matches('#commander-input'))) {
-            pauseForManualInput();
-        }
+    $('#random-message-send').addEventListener('click', sendRandom);
+    $('#random-message-start').addEventListener('click', () => {
+        if (active) return;
+        active = true;
+        paused = false;
+        setStatus('自动发送已启动。');
+        refreshInputState();
+        if (!paused) scheduleNext();
     });
-    document.addEventListener('input', (event) => {
-        if (event.target && (event.target.matches('#output-content') || event.target.matches('#commander-input'))) {
-            pauseForManualInput();
-        }
+    $('#random-message-stop').addEventListener('click', () => {
+        active = false;
+        paused = false;
+        clearSchedule();
+        clearTimeout(resumeTimer);
+        if (countdownEl) countdownEl.textContent = '未启动';
+        setStatus('自动发送已停止。');
     });
+
+    renderPresets();
+    document.addEventListener('focusin', refreshInputState);
+    document.addEventListener('focusout', () => setTimeout(refreshInputState, 0));
+    document.addEventListener('input', refreshInputState);
+    document.addEventListener('keydown', refreshInputState);
+    document.addEventListener('keyup', refreshInputState);
+    const promptPanel = $('#commander-input-panel');
+    if (promptPanel && typeof MutationObserver !== 'undefined') {
+        new MutationObserver(refreshInputState).observe(promptPanel, { attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
+    }
     window.addEventListener('beforeunload', () => {
         clearSchedule();
         clearTimeout(resumeTimer);
     });
-    setStatus('消息库已载入，共 ' + presets().length + ' 条。');
+    setStatus('已从 message.js 载入 ' + presets().length + ' 条消息。');
 })();

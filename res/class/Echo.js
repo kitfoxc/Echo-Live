@@ -9,6 +9,7 @@ class Echo {
         this.message            = '';
         this.messageBuffer      = [];
         this.messageList        = [];
+        this.queueAdvanceScheduled = false;
         this.dbChrBuffer        = '';
         this.timer              = 0;
         this.groupCount         = 0;
@@ -71,6 +72,7 @@ class Echo {
     }
 
     clear() {
+        if (this.timer) clearInterval(this.timer);
         this.message = '';
         this.messageBuffer = [];
         this.timer = 0;
@@ -189,6 +191,17 @@ class Echo {
         return this.send(msg.message, msg?.data);
     }
 
+    scheduleQueueAdvance(force = false) {
+        if (this.queueAdvanceScheduled) return;
+        this.queueAdvanceScheduled = true;
+        setTimeout(() => {
+            this.queueAdvanceScheduled = false;
+            if (this.state === 'stop' && (force || this.messageList.length > 0)) {
+                this.next();
+            }
+        }, 0);
+    }
+
     on(eventName, action = function() {}) {
         if (typeof action != 'function') return;
         return this.event[eventName] = action;
@@ -295,7 +308,7 @@ class Echo {
         }
         if (data?.customData) this.event.customData(data.customData);
         this.state = 'ready';
-        if (typeof config !== 'undefined' && config?.echolive?.print_animation_disable === true) {
+        if (typeof config !== 'undefined' && config?.echo?.print_animation_disable === true) {
             // 通过现有打印器同步消费缓冲区，保留分组、特殊序列及 printStart/printEnd 事件。
             let guard = 0;
             while (this.state !== 'stop' && guard++ < 100000) this.print(this);
@@ -309,9 +322,14 @@ class Echo {
 
     sendList(messageList) {
         if (!Array.isArray(messageList)) return;
-        this.messageList = messageList;
+        // 新批次追加到待播队列末尾，不能覆盖正在等待播放的消息。
+        this.messageList = this.messageList.concat(messageList);
         this.event.sendList();
-        return this.next();
+        // 仅在播放器空闲时启动队列；正在播放时由 printEnd 统一推进。
+        if (this.state === 'stop' && this.messageBuffer.length === 0) {
+            this.scheduleQueueAdvance();
+        }
+        return this.messageList;
     }
 
     skip() {
