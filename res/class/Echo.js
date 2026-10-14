@@ -191,7 +191,7 @@ class Echo {
         return this.send(msg.message, msg?.data);
     }
 
-    scheduleQueueAdvance(force = false) {
+    scheduleQueueAdvance(force = false, delay = 0) {
         if (this.queueAdvanceScheduled) return;
         this.queueAdvanceScheduled = true;
         setTimeout(() => {
@@ -199,7 +199,7 @@ class Echo {
             if (this.state === 'stop' && (force || this.messageList.length > 0)) {
                 this.next();
             }
-        }, 0);
+        }, Math.max(0, Number(delay) || 0));
     }
 
     on(eventName, action = function() {}) {

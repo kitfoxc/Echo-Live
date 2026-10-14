@@ -49,8 +49,14 @@
             : [];
     }
     function renderPresets() {
-        const all = presets();
+        const count = presets().length;
         listEl.textContent = '';
+        const summary = document.createElement('p');
+        summary.className = 'random-message-count';
+        summary.textContent = count > 0
+            ? '已从 message.js 加载 ' + count + ' 条消息。'
+            : 'message.js 中尚未配置消息（0 条）。';
+        listEl.appendChild(summary);
         if (!all.length) {
             const empty = document.createElement('p');
             empty.className = 'random-message-empty';
@@ -93,6 +99,20 @@
             setStatus('编辑器广播尚未初始化，请稍后重试。');
             return false;
         }
+        let payload = message;
+        // 自动消息支持 Echo-Live 快速格式化代码（例如 @b粗体@b）。
+        // 如果解析器不可用，则保留原文，避免随机消息发送失败。
+        if (typeof EchoLiveTools !== 'undefined' && typeof EchoLiveTools.formattingCodeToMessage === 'function') {
+            try {
+                payload = EchoLiveTools.formattingCodeToMessage(message);
+            } catch (error) {
+                console.warn('[Echo-Live Random Messages] Formatting code parse failed; sending raw text.', error);
+                payload = message;
+            }
+        }
+        elb.sendData({ username: '', messages: [{ message: payload }] });
+        lastMessage = message;
+        if (lastEl) lastEl.textContent = message;
         elb.sendData({ username: '', messages: [{ message }] });
         lastMessage = messageText(message);
         if (lastEl) lastEl.textContent = lastMessage;
