@@ -123,6 +123,35 @@ echoLiveSystem.registry.loadRegistry('live_theme', 'name', [
             }
         ]
     }, {
+        "name": "imessage",
+        "title": {
+            "text": "iMessage 气泡",
+            "translate": "imessage.title"
+        },
+        "description": "类 iMessage 的自适应气泡主题，支持蓝色与灰色气泡。",
+        "style": "res/style/live-theme/imessage.css",
+        "variant": [
+            {
+                "name": "blue",
+                "title": {
+                    "text": "经典蓝色",
+                    "translate": "blue"
+                },
+                "attribute": {
+                    "color": "blue"
+                }
+            }, {
+                "name": "gray",
+                "title": {
+                    "text": "消息灰色",
+                    "translate": "gray"
+                },
+                "attribute": {
+                    "color": "gray"
+                }
+            }
+        ]
+    }, {
         "name": "void",
         "title": {
             "text": "虚空",
