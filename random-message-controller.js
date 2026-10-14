@@ -29,23 +29,14 @@
             : [];
     }
     function renderPresets() {
-        const all = presets();
+        const count = presets().length;
         listEl.textContent = '';
-        if (!all.length) {
-            const empty = document.createElement('p');
-            empty.className = 'random-message-empty';
-            empty.textContent = 'message.js 中尚未配置消息。';
-            listEl.appendChild(empty);
-            return;
-        }
-        const list = document.createElement('ol');
-        list.className = 'random-message-items';
-        all.forEach(message => {
-            const item = document.createElement('li');
-            item.textContent = message;
-            list.appendChild(item);
-        });
-        listEl.appendChild(list);
+        const summary = document.createElement('p');
+        summary.className = 'random-message-count';
+        summary.textContent = count > 0
+            ? '已从 message.js 加载 ' + count + ' 条消息。'
+            : 'message.js 中尚未配置消息（0 条）。';
+        listEl.appendChild(summary);
     }
     function shuffle(items) {
         const a = items.slice();
@@ -73,7 +64,18 @@
             setStatus('编辑器广播尚未初始化，请稍后重试。');
             return false;
         }
-        elb.sendData({ username: '', messages: [{ message }] });
+        let payload = message;
+        // 自动消息支持 Echo-Live 快速格式化代码（例如 @b粗体@b）。
+        // 如果解析器不可用，则保留原文，避免随机消息发送失败。
+        if (typeof EchoLiveTools !== 'undefined' && typeof EchoLiveTools.formattingCodeToMessage === 'function') {
+            try {
+                payload = EchoLiveTools.formattingCodeToMessage(message);
+            } catch (error) {
+                console.warn('[Echo-Live Random Messages] Formatting code parse failed; sending raw text.', error);
+                payload = message;
+            }
+        }
+        elb.sendData({ username: '', messages: [{ message: payload }] });
         lastMessage = message;
         if (lastEl) lastEl.textContent = message;
         return true;
