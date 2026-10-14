@@ -9,6 +9,7 @@ class Echo {
         this.message            = '';
         this.messageBuffer      = [];
         this.messageList        = [];
+        this.queueAdvanceScheduled = false;
         this.dbChrBuffer        = '';
         this.timer              = 0;
         this.groupCount         = 0;
@@ -190,6 +191,17 @@ class Echo {
         return this.send(msg.message, msg?.data);
     }
 
+    scheduleQueueAdvance(force = false) {
+        if (this.queueAdvanceScheduled) return;
+        this.queueAdvanceScheduled = true;
+        setTimeout(() => {
+            this.queueAdvanceScheduled = false;
+            if (this.state === 'stop' && (force || this.messageList.length > 0)) {
+                this.next();
+            }
+        }, 0);
+    }
+
     on(eventName, action = function() {}) {
         if (typeof action != 'function') return;
         return this.event[eventName] = action;
@@ -315,7 +327,7 @@ class Echo {
         this.event.sendList();
         // 仅在播放器空闲时启动队列；正在播放时由 printEnd 统一推进。
         if (this.state === 'stop' && this.messageBuffer.length === 0) {
-            return this.next();
+            this.scheduleQueueAdvance();
         }
         return this.messageList;
     }
