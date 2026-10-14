@@ -211,7 +211,7 @@ echo.on('printEnd', function() {
     }
     // 队列中每条消息至少显示一段与文本长度成正比的时间。
     // 按 Unicode 字符计数，避免中文因 UTF-8 字节数而被过度放大。
-    const queueDisplayDelay = Math.max(1200, messageDisplayLength * 75);
+    const queueDisplayDelay = 1200 + messageDisplayLength * 75;
 
     if (config.echolive.display.auto) {
         const autoHideDelay = messageLenB * 1000 * config.echolive.display.long_text_compensation_rate - duration;
