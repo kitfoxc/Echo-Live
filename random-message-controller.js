@@ -58,20 +58,20 @@
     function sendRandom() {
         try {
             const message = nextMessage();
-            if (sendMessage(message)) setStatus('已发送随机消息。');
+            if (sendMessage(message)) {
+                setStatus('已发送随机消息。');
+                if (active && !paused) scheduleNext();
+            }
         } catch (error) {
             setStatus(error.message || String(error));
         }
     }
-    function delayForNext() {
-        const all = presets();
-        if (!all.length) return 180000;
-        const peek = bag.length ? bag[bag.length - 1] : shuffle(all)[0];
+    function delayForMessage(message) {
         const base = Math.max(5, Number($('#random-message-interval').value) || 180) * 1000;
         const jitter = Math.max(0, Math.min(100, Number($('#random-message-jitter').value) || 0)) / 100;
         const randomFactor = 1 + (Math.random() * 2 - 1) * jitter;
         const perChar = Math.max(0, Number($('#random-message-char-delay').value) || 0);
-        return Math.max(1000, Math.round(base * randomFactor + [...peek].length * perChar));
+        return Math.max(1000, Math.round(base * randomFactor + [...message].length * perChar));
     }
     function clearSchedule() {
         clearTimeout(timer);
@@ -84,7 +84,14 @@
     function scheduleNext() {
         clearSchedule();
         if (!active || paused) return;
-        const delay = delayForNext();
+        let scheduledMessage;
+        try {
+            scheduledMessage = nextMessage();
+        } catch (error) {
+            setStatus(error.message || String(error));
+            return;
+        }
+        const delay = delayForMessage(scheduledMessage);
         dueAt = Date.now() + delay;
         if (countdownEl) countdownEl.textContent = Math.ceil(delay / 1000) + ' 秒';
         countdownTimer = setInterval(() => {
@@ -96,7 +103,7 @@
             clearInterval(countdownTimer);
             countdownTimer = 0;
             if (!active || paused) return;
-            sendRandom();
+            if (sendMessage(scheduledMessage)) setStatus('已发送随机消息。');
             scheduleNext();
         }, delay);
     }

@@ -1,4 +1,4 @@
-const db_config_version = 16;
+const db_config_version = 17;
 
 const db_config_define = [
     {

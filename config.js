@@ -1,5 +1,5 @@
 const config = {
-    "data_version": 16,
+    "data_version": 17,
     "global": {
         "language": "zho-Hans",
         "theme": "vanilla",
