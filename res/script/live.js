@@ -146,50 +146,12 @@ function observeIMessageBubbleContent() {
     refreshIMessageBubbleAnimation();
 }
 
-function observeIMessageBubbleResize() {
-    const bubble = document.querySelector('#echo-live .center-center');
-    if (!bubble || typeof ResizeObserver === 'undefined') return;
-
-    let previousWidth = 0;
-    let previousHeight = 0;
-    let settleTimer = 0;
-
-    const observer = new ResizeObserver(entries => {
-        const rect = entries[0]?.contentRect;
-        if (!rect) return;
-
-        const changed = previousWidth > 0
-            && (Math.abs(rect.width - previousWidth) > 1
-                || Math.abs(rect.height - previousHeight) > 1);
-        previousWidth = rect.width;
-        previousHeight = rect.height;
-
-        if (!changed || !bubble.classList.contains('imessage-content-active')) return;
-
-        // Debounce repeated character/layout changes into one elastic response.
-        clearTimeout(settleTimer);
-        settleTimer = setTimeout(() => {
-            bubble.classList.remove('imessage-bubble-resizing');
-            void bubble.offsetWidth;
-            bubble.classList.add('imessage-bubble-resizing');
-        }, 90);
-    });
-
-    observer.observe(bubble);
-    bubble.addEventListener('animationend', event => {
-        if (event.animationName === 'imessage-bubble-resize') {
-            bubble.classList.remove('imessage-bubble-resizing');
-        }
-    });
-}
-
 
 
 
 
 $(document).ready(function() {
     observeIMessageBubbleContent();
-    observeIMessageBubbleResize();
     translator.ready(() => {
         emojiHako = new EmojiHako();
         if (config.echolive.layout.diplay_controller) echolive.setController(config.echolive.layout.controller || '');
@@ -304,7 +266,7 @@ echo.on('printEnd', function() {
     }
     // 队列中每条消息至少显示一段与文本长度成正比的时间。
     // 按 Unicode 字符计数，避免中文因 UTF-8 字节数而被过度放大。
-    const queueDisplayDelay = 1200 + messageDisplayLength * 75;
+    const queueDisplayDelay = 3000 + messageDisplayLength * 75;
 
     if (config.echolive.display.auto) {
         const autoHideDelay = messageLenB * 1000 * config.echolive.display.long_text_compensation_rate - duration;
