@@ -2,11 +2,10 @@
 window.EchoLiveRandomMessages = [
     "欢迎来到直播间！",
     {
-        "name": "欢迎消息（富文本）",
         "text": "感谢你的关注与支持！",
         "style": {
             "bold": true,
-            "color": "#66CCFF"
+            "color": "#666666"
         }
     },
     [
@@ -24,19 +23,24 @@ window.EchoLiveRandomMessages = [
         }
     ],
     {
-        "name": "欢迎队列示例",
+        "username": "",
         "messages": [
-            {
-                "message": "欢迎来到直播间！"
-            },
             {
                 "message": [
                     {
-                        "text": "感谢大家的陪伴。",
-                        "style": {
-                            "bold": true,
-                            "color": "#66CCFF"
-                        }
+                        "text": "这一段立即显示。"
+                    },
+                    {
+                        "text": "这一段延迟淡入。",
+                        "visibility": 200
+                    },
+                    {
+                        "text": "这一段也会延迟淡入。",
+                        "visibility": 400
+                    },
+                    {
+                        "text": "停顿之后才继续播放。",
+                        "visibility": 100
                     }
                 ]
             }
