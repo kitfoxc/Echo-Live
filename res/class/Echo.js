@@ -156,7 +156,8 @@ class Echo {
                 ruby: msg?.ruby,
                 printSpeed: msg?.speed,
                 event: msg?.event,
-                data: msg?.data
+                data: msg?.data,
+                visibility: msg?.visibility
             };
 
             let dataAfter = {
@@ -166,7 +167,14 @@ class Echo {
             };
 
             let dataContent, data;
-            if (msg?.typewrite == undefined) {
+            if (msg?.visibility !== undefined) {
+                // Visibility groups render their full text in one operation, then fade in.
+                // Their text remains in normal layout flow while opacity is zero.
+                dataContent = [{
+                    action: 'visibility_content',
+                    text: String(msg.text ?? '')
+                }];
+            } else if (msg?.typewrite == undefined) {
                 dataContent = [...msg.text];
             } else {
                 dataContent = [...msg.typewrite];
@@ -174,7 +182,7 @@ class Echo {
 
             data = [dataBefore, ...dataContent, dataAfter];
 
-            if (msg?.typewrite != undefined) {
+            if (msg?.typewrite != undefined && msg?.visibility === undefined) {
                 data = [...data, msg.text];
             }
 
@@ -243,6 +251,19 @@ class Echo {
         // 浏览器因此可以直接排版完整段落，而不是逐字符改变气泡尺寸。
         if (that.printAnimationDisabled) {
             return that.printDisabledBatch(that);
+        }
+
+        // A visibility-marked rich-text group must be laid out in full before its fade-in.
+        if (that.messageBuffer[0]?.action === 'visibility_content') {
+            const item = that.messageBuffer.shift();
+            let content = String(item.text ?? '');
+            if (that.filter.HTMLFormat) {
+                content = content.replace(/ /g, '&ensp;');
+                content = content.replace(/</g, '&lt;');
+                content = content.replace(/>/g, '&gt;');
+            }
+            that.event.print(content);
+            return content;
         }
 
         let a;
@@ -332,6 +353,15 @@ class Echo {
                     that.groupStart(next);
                 } else if (next.action === 'group_end') {
                     that.groupEnd(next);
+                } else if (next.action === 'visibility_content') {
+                    let content = String(next.text ?? '');
+                    if (that.filter.HTMLFormat) {
+                        content = content.replace(/ /g, '&ensp;');
+                        content = content.replace(/</g, '&lt;');
+                        content = content.replace(/>/g, '&gt;');
+                    }
+                    that.event.print(content);
+                    lastOutput = content;
                 }
                 continue;
             }
