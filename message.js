@@ -43,23 +43,33 @@ window.EchoLiveRandomMessages = [
         ]
     },
     {
-        "message": [
+        "username": "",
+        "messages": [
             {
-                "text": "我们所经历的每个平凡的日常，",
-                "pause": 40
-            },
-            {
-                "text": "也许就是连续发生的奇迹。"
+                "message": [
+                    {
+                        "text": "我们所经历的每个平凡的日常，",
+                        "pause": 40
+                    },
+                    {
+                        "text": "也许就是连续发生的奇迹。"
+                    }
+                ]
             }
         ]
     },
     {
-        "message": {
-            "text": "你说话带空格。",
-            "style": {
-                "letterSpacing": "half-width"
+        "username": "",
+        "messages": [
+            {
+                "message": {
+                    "text": "你说话带空格",
+                    "style": {
+                        "letterSpacing": "half-width"
+                    }
+                }
             }
-        }
+        ]
     },
     {
         "username": "",
@@ -91,19 +101,32 @@ window.EchoLiveRandomMessages = [
     },
     {
         "username": "",
-        "message": {
-            "text": "注释",
-            "ruby": "zhù shì"
-        }
+        "messages": [
+            {
+                "message": {
+                    "text": "注释",
+                    "ruby": "zhù shì"
+                }
+            }
+        ]
     },
     {
         "username": "",
-        "message": {
-            "text": "Only my RAILGUN can shoot it.",
-            "style": {
-                "stretch": "condensed"
+        "messages": [
+            {
+                "message": {
+                    "text": "Only my RAILGUN can shoot it.",
+                    "style": {
+                        "shadow": {
+                            "x": "0.25em",
+                            "y": "0.25em",
+                            "blur": "0.35em",
+                            "color": "#66CCFF"
+                        }
+                    }
+                }
             }
-        }
+        ]
     },
     {
         "username": "",
