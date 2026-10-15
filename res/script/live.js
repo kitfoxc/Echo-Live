@@ -146,12 +146,49 @@ function observeIMessageBubbleContent() {
     refreshIMessageBubbleAnimation();
 }
 
+function observeIMessageBubbleResize() {
+    const bubble = document.querySelector('#echo-live .center-center');
+    if (!bubble || typeof ResizeObserver === 'undefined') return;
+
+    let previousWidth = 0;
+    let previousHeight = 0;
+    let settleTimer = 0;
+
+    const observer = new ResizeObserver(entries => {
+        const rect = entries[0]?.contentRect;
+        if (!rect) return;
+
+        const changed = previousWidth > 0
+            && (Math.abs(rect.width - previousWidth) > 1
+                || Math.abs(rect.height - previousHeight) > 1);
+        previousWidth = rect.width;
+        previousHeight = rect.height;
+
+        if (!changed || !bubble.classList.contains('imessage-content-active')) return;
+
+        // Debounce repeated character/layout changes into one elastic response.
+        clearTimeout(settleTimer);
+        settleTimer = setTimeout(() => {
+            bubble.classList.remove('imessage-bubble-resizing');
+            void bubble.offsetWidth;
+            bubble.classList.add('imessage-bubble-resizing');
+        }, 90);
+    });
+
+    observer.observe(bubble);
+    bubble.addEventListener('animationend', event => {
+        if (event.animationName === 'imessage-bubble-resize') {
+            bubble.classList.remove('imessage-bubble-resizing');
+        }
+    });
+}
+
 
 
 
 
 $(document).ready(function() {
-    observeIMessageBubbleContent();
+    observeIMessageBubbleContent();\n    observeIMessageBubbleResize();
     translator.ready(() => {
         emojiHako = new EmojiHako();
         if (config.echolive.layout.diplay_controller) echolive.setController(config.echolive.layout.controller || '');
