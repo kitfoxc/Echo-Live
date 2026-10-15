@@ -136,7 +136,7 @@ body {
     padding: 0.72em 1em;
     overflow-wrap: anywhere;
     word-break: normal;
-    text-align: center;
+    text-align: left;
     font-size: var(--echo-live-content-font-size);
     line-height: 1.28;
     color: var(--imessage-bubble-text);
@@ -203,7 +203,7 @@ body {
     color: var(--echo-live-username-color);
     font-size: var(--echo-live-username-font-size);
     line-height: 1.15;
-    text-align: center;
+    text-align: left;
 }
 
 #echo-live .name:empty {
@@ -215,7 +215,7 @@ body {
     margin: 0;
     padding: 0;
     color: inherit;
-    text-align: center;
+    text-align: left;
     overflow-wrap: anywhere;
     word-break: normal;
 }
