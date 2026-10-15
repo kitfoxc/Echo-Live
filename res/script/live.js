@@ -153,16 +153,6 @@ function observeIMessageBubbleResize() {
     let previousWidth = 0;
     let previousHeight = 0;
     let settleTimer = 0;
-    let initialEntranceFinished = false;
-
-    bubble.addEventListener('animationend', event => {
-        if (event.animationName === 'imessage-bubble-pop') {
-            initialEntranceFinished = true;
-        }
-        if (event.animationName === 'imessage-bubble-resize') {
-            bubble.classList.remove('imessage-bubble-resizing');
-        }
-    });
 
     const observer = new ResizeObserver(entries => {
         const rect = entries[0]?.contentRect;
@@ -174,7 +164,7 @@ function observeIMessageBubbleResize() {
         previousWidth = rect.width;
         previousHeight = rect.height;
 
-        if (!changed || !initialEntranceFinished || !bubble.classList.contains('imessage-content-active')) return;
+        if (!changed || !bubble.classList.contains('imessage-content-active')) return;
 
         // Debounce repeated character/layout changes into one elastic response.
         clearTimeout(settleTimer);
@@ -186,6 +176,11 @@ function observeIMessageBubbleResize() {
     });
 
     observer.observe(bubble);
+    bubble.addEventListener('animationend', event => {
+        if (event.animationName === 'imessage-bubble-resize') {
+            bubble.classList.remove('imessage-bubble-resizing');
+        }
+    });
 }
 
 
