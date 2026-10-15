@@ -2218,3 +2218,86 @@ select:focus {
     font-weight: 300;
     padding: var(--gap-small) var(--gap-middle);
 }
+
+/* Random-message controls follow the Echo-Live editor's theme tokens. */
+#random-message-panel.random-message-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.random-message-dashboard {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .75rem;
+}
+.random-message-stat {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    padding: .9rem 1rem;
+    border: 1px solid var(--border-color, var(--text-secondary));
+    border-radius: var(--border-radius, .65rem);
+    background: var(--background-secondary, var(--input-bgcolor));
+}
+.random-message-stat > span {
+    color: var(--text-secondary);
+    font-size: var(--font-size-small, .85rem);
+}
+.random-message-stat > strong {
+    display: block;
+    min-width: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+.random-message-library strong { color: var(--text-primary); }
+#random-message-status[data-state="active"] { color: var(--success-color, #24945a); }
+#random-message-status[data-state="paused"] { color: var(--warning-color, #b7791f); }
+#random-message-status[data-state="stopped"] { color: var(--text-secondary); }
+.random-message-recent { grid-column: 1 / -1; }
+.random-message-recent strong {
+    max-height: 4.2em;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-weight: 500;
+}
+.random-message-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .65rem;
+    margin: 0;
+}
+.random-message-actions .fh-button {
+    min-height: 2.75rem;
+    justify-content: center;
+    font-weight: 600;
+}
+.random-message-actions .random-message-send { border-color: var(--border-color, var(--text-secondary)); }
+.random-message-actions .random-message-start {
+    color: #fff;
+    background: var(--success-color, #248a52);
+    border-color: var(--success-color, #248a52);
+}
+.random-message-actions .random-message-stop {
+    color: #fff;
+    background: var(--danger-color, #c83e42);
+    border-color: var(--danger-color, #c83e42);
+}
+.random-message-actions .fh-button:disabled {
+    opacity: .42;
+    cursor: not-allowed;
+    filter: saturate(.55);
+}
+.random-message-settings {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .25rem 1rem;
+    padding-top: .75rem;
+    border-top: 1px solid var(--border-color, var(--text-secondary));
+}
+@media (max-width: 720px) {
+    .random-message-dashboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .random-message-actions { grid-template-columns: 1fr; }
+    .random-message-settings { grid-template-columns: 1fr; }
+}
