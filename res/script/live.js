@@ -43,7 +43,7 @@ let groupIndex = 0;
 
 // 关闭逐字动画时，普通文本暂存到 printEnd；富文本分组暂时隐藏，groupEnd 后整体显示。
 const printAnimationDisabled = config.echo?.print_animation_disable === true;
-let disabledPlainOutput = '';
+echo.printAnimationDisabled = printAnimationDisabled;
 
 let first = false;
 
@@ -88,8 +88,6 @@ function messageOutput(text = '', hasHTML = false) {
         inTypewriteEnd = false;
         $('.echo-output .echo-text-typewrite' + exsel).html(textDOM);
         $('.echo-output .echo-text-typewrite' + exsel).removeClass('echo-text-typewrite').css('visibility', 'visible');
-    } else if (printAnimationDisabled && groupIndex === 0) {
-        disabledPlainOutput += textDOM;
     } else if (groupIndex === 0) {
         $('.echo-output' + exsel).append(textDOM);
     } else {
@@ -114,11 +112,14 @@ function refreshIMessageBubbleAnimation() {
     const hasContent = output.textContent.trim().length > 0
         || output.querySelector('img, video, .echo-emoji-icon, br, ruby') !== null;
 
-    bubble.classList.remove('imessage-content-active');
-    if (!hasContent) return;
+    if (!hasContent) {
+        bubble.classList.remove('imessage-content-active');
+        return;
+    }
 
-    // Force a style/layout boundary so re-adding the class restarts keyframes.
-    void bubble.offsetWidth;
+    // Only play the entrance animation once per message. Text mutations must not
+    // restart it, otherwise rich-text segments make the bubble visibly flicker.
+    if (bubble.classList.contains('imessage-content-active')) return;
     bubble.classList.add('imessage-content-active');
 }
 
@@ -222,12 +223,10 @@ echo.on('print', function(chr) {
 });
 
 echo.on('clear', function() {
-    disabledPlainOutput = '';
     $('.echo-output').html('');
 });
 
 echo.on('skip', function() {
-    disabledPlainOutput = '';
     $('.echo-output').html('');
 });
 
@@ -241,10 +240,6 @@ echo.on('printStart', function() {
 });
 
 echo.on('printEnd', function() {
-    if (printAnimationDisabled && disabledPlainOutput) {
-        $('.echo-output').append(disabledPlainOutput);
-        disabledPlainOutput = '';
-    }
     // 整理字符串
     // $('.echo-output').html($('.echo-output').html());
     if(config.echolive.broadcast.enable) echolive.broadcast.echoStateUpdate('stop', echo.messageList.length);
