@@ -297,22 +297,25 @@ echo.on('groupStart', function(e) {
 });
 
 echo.on('groupEnd', function(e) {
-    const selector = `.echo-output span[data-group="${e.groupId}"]`;
-    if (printAnimationDisabled && e.groupId !== 0) {
+    // Echo's current groupEnd event reports groupNow but does not reliably expose
+    // the ended group's ID, so capture the active group before advancing it.
+    const endedGroupIndex = groupIndex;
+    const selector = `.echo-output span[data-group="${endedGroupIndex}"]`;
+    if (printAnimationDisabled && endedGroupIndex !== 0) {
         // Typewrite groups remain hidden until typewriteEnd replaces their content.
         if (!$(selector).hasClass('echo-text-typewrite')) {
             $(selector).css('visibility', 'visible');
         }
     }
 
-    if (visibilityGroupDurations.has(e.groupId)) {
-        const delay = visibilityGroupDurations.get(e.groupId);
-        visibilityGroupDurations.delete(e.groupId);
+    if (visibilityGroupDurations.has(endedGroupIndex)) {
+        const delay = visibilityGroupDurations.get(endedGroupIndex);
+        visibilityGroupDurations.delete(endedGroupIndex);
         const timer = setTimeout(() => {
-            visibilityTimers.delete(e.groupId);
+            visibilityTimers.delete(endedGroupIndex);
             $(selector).css('opacity', '1');
         }, delay);
-        visibilityTimers.set(e.groupId, timer);
+        visibilityTimers.set(endedGroupIndex, timer);
     }
 
     groupIndex = e.groupNow;
