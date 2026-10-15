@@ -188,7 +188,8 @@ function observeIMessageBubbleResize() {
 
 
 $(document).ready(function() {
-    observeIMessageBubbleContent();\n    observeIMessageBubbleResize();
+    observeIMessageBubbleContent();
+    observeIMessageBubbleResize();
     translator.ready(() => {
         emojiHako = new EmojiHako();
         if (config.echolive.layout.diplay_controller) echolive.setController(config.echolive.layout.controller || '');
