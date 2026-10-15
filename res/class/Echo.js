@@ -12,6 +12,8 @@ class Echo {
         this.queueAdvanceScheduled = false;
         this.dbChrBuffer        = '';
         this.timer              = 0;
+        this.pauseTimer         = 0;
+        this.printAnimationDisabled = false;
         this.groupCount         = 0;
         this.groupStack         = [];
         this.printSpeed         = 30;
@@ -73,6 +75,9 @@ class Echo {
 
     clear() {
         if (this.timer) clearInterval(this.timer);
+        if (this.pauseTimer) clearTimeout(this.pauseTimer);
+        this.timer = 0;
+        this.pauseTimer = 0;
         this.message = '';
         this.messageBuffer = [];
         this.timer = 0;
@@ -174,8 +179,10 @@ class Echo {
             }
 
             if (msg?.pause) {
-                let before = Array(msg.pause).fill('');
-                data = [...data, ...before];
+                data = [...data, {
+                    action: 'pause',
+                    duration: Math.max(0, Number(msg.pause) || 0)
+                }];
             }
             
             return data;
@@ -214,6 +221,30 @@ class Echo {
             that.event.printStart();
         }
 
+        // pause 是独立的时间标记，不再依赖空字符串占位。
+        if (that.messageBuffer[0]?.action === 'pause') {
+            const pause = that.messageBuffer.shift();
+            const duration = Math.max(0, Number(pause.duration) || 0) * that.printSpeedStart;
+            if (duration > 0) {
+                clearInterval(that.timer);
+                that.timer = 0;
+                clearTimeout(that.pauseTimer);
+                that.pauseTimer = setTimeout(() => {
+                    that.pauseTimer = 0;
+                    if (that.state !== 'stop' && that.state !== 'last') {
+                        that.timer = setInterval(that.print, that.printAnimationDisabled ? 0 : that.printSpeedChange, that);
+                    }
+                }, duration);
+                return;
+            }
+        }
+
+        // 关闭逐字动画时，在同一个任务中输出到下一个 pause。
+        // 浏览器因此可以直接排版完整段落，而不是逐字符改变气泡尺寸。
+        if (that.printAnimationDisabled) {
+            return that.printDisabledBatch(that);
+        }
+
         let a;
         if (that.dbChrBuffer != '') {
             a = that.dbChrBuffer;
@@ -242,7 +273,7 @@ class Echo {
             a += that.messageBuffer.shift();
         }
 
-        if (that.messageBuffer[0] === '\u200b') {
+        if (that.messageBuffer[0] === '\\u200b') {
             a += that.messageBuffer.shift();
         }
 
@@ -255,14 +286,17 @@ class Echo {
         that.event.print(a);
 
         function __checkMessageBufferNext() {
-            if (typeof that.messageBuffer[0] == 'object' && that.messageBuffer[0]?.action != 'custom_sequence') {
+            while (
+                typeof that.messageBuffer[0] == 'object'
+                && that.messageBuffer[0]?.action !== 'custom_sequence'
+                && that.messageBuffer[0]?.action !== 'pause'
+            ) {
                 let obj = that.messageBuffer.shift();
                 if (obj.action == 'group_start') {
                     that.groupStart(obj);
                 } else if (obj.action == 'group_end') {
                     that.groupEnd(obj);
                 }
-                __checkMessageBufferNext();
             }
         }
 
@@ -280,6 +314,68 @@ class Echo {
         }
 
         return a;
+    }
+
+    printDisabledBatch(that = this) {
+        let lastOutput;
+        let safety = 0;
+
+        while (that.messageBuffer.length > 0 && safety++ < 100000) {
+            const next = that.messageBuffer[0];
+
+            if (next && typeof next === 'object') {
+                if (next.action === 'pause') break;
+                that.messageBuffer.shift();
+                if (next.action === 'custom_sequence') {
+                    that.event.customSequence(next);
+                } else if (next.action === 'group_start') {
+                    that.groupStart(next);
+                } else if (next.action === 'group_end') {
+                    that.groupEnd(next);
+                }
+                continue;
+            }
+
+            let a = that.messageBuffer.shift();
+            if (typeof a !== 'string') continue;
+
+            if (that.typewrite === 'ready') {
+                that.typewrite = 'none';
+                that.event.typewriteEnd();
+            } else if (
+                that.typewrite === 'input'
+                && a === "'"
+                && typeof that.messageBuffer[0] === 'string'
+            ) {
+                a += that.messageBuffer.shift();
+            }
+
+            if (that.messageBuffer[0] === '\\u200b') {
+                a += that.messageBuffer.shift();
+            }
+
+            if (that.filter.HTMLFormat) {
+                a = a.replace(/ /g, '&ensp;');
+                a = a.replace(/</g, '&lt;');
+                a = a.replace(/>/g, '&gt;');
+            }
+
+            that.event.print(a);
+            lastOutput = a;
+        }
+
+        if (that.messageBuffer.length === 0) {
+            clearInterval(that.timer);
+            that.timer = 0;
+            that.state = 'last';
+        }
+
+        if (that.state === 'last') {
+            that.event.printEnd();
+            that.state = 'stop';
+        }
+
+        return lastOutput;
     }
 
     send(text, data = {}) {
@@ -310,7 +406,7 @@ class Echo {
         this.state = 'ready';
         // 关闭逐字显示时仍按打印速度推进队列。live.js 会暂时隐藏正在输出的段落，
         // 并在段落结束时一次性显示，从而保留 pause 的时间间隔。
-        this.timer = setInterval(this.print, this.printSpeedStart, this);
+        this.timer = setInterval(this.print, this.printAnimationDisabled ? 0 : this.printSpeedStart, this);
         return this.message;
     }
 
@@ -328,6 +424,9 @@ class Echo {
 
     skip() {
         clearInterval(this.timer);
+        clearTimeout(this.pauseTimer);
+        this.timer = 0;
+        this.pauseTimer = 0;
         let txt = this.dbChrBuffer + this.messageBuffer.join('');
         this.messageBuffer = [];
         // 触发跳过事件
@@ -348,12 +447,15 @@ class Echo {
             this.printSpeedChange = this.printSpeedStart;
         }
         clearInterval(this.timer);
-        this.timer = setInterval(this.print, this.printSpeedChange, this);
+        this.timer = setInterval(this.print, this.printAnimationDisabled ? 0 : this.printSpeedChange, this);
         return this.printSpeedChange;
     }
 
     stop() {
         clearInterval(this.timer);
+        clearTimeout(this.pauseTimer);
+        this.timer = 0;
+        this.pauseTimer = 0;
         this.state = 'stop';
         this.messageBuffer = [];
         this.dbChrBuffer = '';
