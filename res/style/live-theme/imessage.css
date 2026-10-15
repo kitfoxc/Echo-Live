@@ -110,8 +110,11 @@ body {
     flex: 1 1 auto;
     width: 100%;
     min-height: 0;
-    align-items: center;
-    justify-content: center;
+    /* Anchor the bubble to the lower-right corner with breathing room. */
+    align-items: flex-end;
+    justify-content: flex-end;
+    box-sizing: border-box;
+    padding: 0 3vw 3vh 0;
 }
 
 #echo-live .center-left,
@@ -231,6 +234,10 @@ body {
 
 /* Slightly more compact sizing on narrow browser sources. */
 @media (max-width: 700px) {
+    #echo-live > .center {
+        padding-right: 4vw;
+        padding-bottom: 4vh;
+    }
     #echo-live .center-center {
         max-width: 88vw;
         padding: 0.68em 0.9em;
