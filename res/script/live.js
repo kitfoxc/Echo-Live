@@ -41,6 +41,10 @@ let data;
 
 let groupIndex = 0;
 
+// 关闭逐字动画时，普通文本暂存到 printEnd；富文本分组暂时隐藏，groupEnd 后整体显示。
+const printAnimationDisabled = config.echo?.print_animation_disable === true;
+let disabledPlainOutput = '';
+
 let first = false;
 
 let inTypewriteEnd = false;
@@ -83,7 +87,9 @@ function messageOutput(text = '', hasHTML = false) {
     if (inTypewriteEnd) {
         inTypewriteEnd = false;
         $('.echo-output .echo-text-typewrite' + exsel).html(textDOM);
-        $('.echo-output .echo-text-typewrite' + exsel).removeClass('echo-text-typewrite');
+        $('.echo-output .echo-text-typewrite' + exsel).removeClass('echo-text-typewrite').css('visibility', 'visible');
+    } else if (printAnimationDisabled && groupIndex === 0) {
+        disabledPlainOutput += textDOM;
     } else if (groupIndex === 0) {
         $('.echo-output' + exsel).append(textDOM);
     } else {
@@ -216,10 +222,12 @@ echo.on('print', function(chr) {
 });
 
 echo.on('clear', function() {
+    disabledPlainOutput = '';
     $('.echo-output').html('');
 });
 
 echo.on('skip', function() {
+    disabledPlainOutput = '';
     $('.echo-output').html('');
 });
 
@@ -233,6 +241,10 @@ echo.on('printStart', function() {
 });
 
 echo.on('printEnd', function() {
+    if (printAnimationDisabled && disabledPlainOutput) {
+        $('.echo-output').append(disabledPlainOutput);
+        disabledPlainOutput = '';
+    }
     // 整理字符串
     // $('.echo-output').html($('.echo-output').html());
     if(config.echolive.broadcast.enable) echolive.broadcast.echoStateUpdate('stop', echo.messageList.length);
@@ -270,10 +282,18 @@ echo.on('printEnd', function() {
 echo.on('groupStart', function(e) {
     groupIndex = e.groupNow;
     let d = EchoLiveTools.messageStyleGenerator(e.data);
-    $('.echo-output').append(`<span data-group="${groupIndex}" class="${d.class}" style="${d.style}"></span>`);
+    const hiddenStyle = printAnimationDisabled ? ';visibility:hidden' : '';
+    $('.echo-output').append(`<span data-group="${groupIndex}" class="${d.class}" style="${d.style}${hiddenStyle}"></span>`);
 });
 
 echo.on('groupEnd', function(e) {
+    if (printAnimationDisabled && groupIndex !== 0) {
+        const selector = `.echo-output span[data-group="${groupIndex}"]`;
+        // Typewrite groups remain hidden until typewriteEnd replaces their content.
+        if (!$(selector).hasClass('echo-text-typewrite')) {
+            $(selector).css('visibility', 'visible');
+        }
+    }
     groupIndex = e.groupNow;
 });
 
