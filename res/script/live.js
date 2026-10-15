@@ -341,6 +341,7 @@ echo.on('clear', function() {
 
 echo.on('skip', function() {
     clearVisibilityTimers();
+    clearFinalBubbleLayoutReservation();
     $('.echo-output').html('');
 });
 
