@@ -323,6 +323,9 @@ class Echo {
                 && that.messageBuffer[0]?.action !== 'custom_sequence'
                 && that.messageBuffer[0]?.action !== 'pause'
                 && that.messageBuffer[0]?.action !== 'visibility_wait'
+                // Leave this marker for the next print tick so its full text is
+                // emitted in one operation instead of being silently consumed here.
+                && that.messageBuffer[0]?.action !== 'visibility_content'
             ) {
                 let obj = that.messageBuffer.shift();
                 if (obj.action == 'group_start') {
