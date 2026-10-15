@@ -63,6 +63,71 @@ let messageActions = {
 
 let inRuby = false;
 
+// Reserve the final bubble dimensions before the first visible frame.
+// A hidden, off-screen clone uses the same theme styles and lays out every
+// paragraph up front; the real output can then reveal content progressively
+// without growing the bubble as later paragraphs are printed.
+function clearFinalBubbleLayoutReservation() {
+    const bubble = document.querySelector('#echo-live .center-center');
+    if (!bubble) return;
+    bubble.style.minWidth = '';
+    bubble.style.minHeight = '';
+}
+
+function reserveFinalBubbleLayout(message) {
+    const bubble = document.querySelector('#echo-live .center-center');
+    const output = bubble?.querySelector('.echo-output');
+    if (!bubble || !output || message == null) return;
+
+    clearFinalBubbleLayoutReservation();
+
+    const measureBubble = bubble.cloneNode(false);
+    measureBubble.classList.remove('imessage-content-active', 'imessage-bubble-resizing');
+    measureBubble.removeAttribute('id');
+    measureBubble.style.cssText += ';position:fixed!important;left:-100000px!important;top:0!important;right:auto!important;bottom:auto!important;visibility:hidden!important;opacity:0!important;animation:none!important;transition:none!important;transform:none!important;filter:none!important;width:fit-content!important;height:auto!important;min-width:0!important;min-height:0!important;max-width:min(84vw, 1100px)!important;max-height:none!important;pointer-events:none!important;';
+    
+    const measureOutput = output.cloneNode(false);
+    measureOutput.innerHTML = '';
+    measureBubble.appendChild(measureOutput);
+
+    function appendMeasuredText(parent, value) {
+        const lines = String(value ?? '').replace(/ /g, '\u2002').split('\n');
+        lines.forEach((line, index) => {
+            if (index > 0) parent.appendChild(document.createElement('br'));
+            if (line) parent.appendChild(document.createTextNode(line));
+        });
+    }
+
+    const items = Array.isArray(message) ? message : [message];
+    for (const item of items) {
+        if (typeof item === 'string') {
+            appendMeasuredText(measureOutput, item);
+            continue;
+        }
+        if (!item || typeof item !== 'object') continue;
+
+        // Rich-text paragraphs use the same class/style generator as live output.
+        if (item.text !== undefined || item.typewrite !== undefined) {
+            const span = document.createElement('span');
+            const style = EchoLiveTools.messageStyleGenerator(item);
+            span.className = style.class || '';
+            span.style.cssText = style.style || '';
+            appendMeasuredText(span, item.text ?? item.typewrite ?? '');
+            measureOutput.appendChild(span);
+        }
+    }
+
+    document.body.appendChild(measureBubble);
+    const rect = measureBubble.getBoundingClientRect();
+    measureBubble.remove();
+
+    if (rect.width > 0 && rect.height > 0) {
+        // The theme's bubble uses border-box sizing, so these are final outer dimensions.
+        bubble.style.minWidth = rect.width + 'px';
+        bubble.style.minHeight = rect.height + 'px';
+    }
+}
+
 
 let messageLenB = 0;
 let messageDisplayLength = 0;
@@ -270,6 +335,7 @@ echo.on('print', function(chr) {
 
 echo.on('clear', function() {
     clearVisibilityTimers();
+    clearFinalBubbleLayoutReservation();
     $('.echo-output').html('');
 });
 
@@ -279,6 +345,7 @@ echo.on('skip', function() {
 });
 
 echo.on('printStart', function() {
+    reserveFinalBubbleLayout(echo.message);
     performance.clearMarks();
     performance.clearMeasures();
     performance.mark('printStart');
