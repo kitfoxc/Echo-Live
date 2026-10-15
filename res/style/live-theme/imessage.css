@@ -157,7 +157,7 @@ body {
         visibility 0s linear 220ms;
 }
 
-/* Any actual output mutation restarts this entrance animation. */
+/* The entrance animation is triggered once when the message first gains content. */
 #echo-live .center-center.imessage-content-active {
     visibility: visible;
     opacity: 1;
