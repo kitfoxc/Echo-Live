@@ -591,39 +591,48 @@
             <!-- 随机跑马灯消息控制 -->
             <section class="tabpage-panel hide" role="tabpanel" data-pageid="broadcast" aria-labelledby="tabpage-panel-title-broadcast">
                 <h2 class="tabpage-panel-title" id="tabpage-panel-title-broadcast">随机消息控制</h2>
-                <div class="echo-editor-form" id="random-message-panel">
-                    <p>消息库仅从 <code>message.js</code> 载入。编辑该文件中的 <code>window.EchoLiveRandomMessages</code> 数组即可管理预设消息。随机消息默认不显示说话人；每轮抽取不重复，全部抽完后自动重新洗牌。</p>
-                    <p>需要创建或编辑富文本预设？<a href="message_editor.html" target="_blank" rel="noopener">打开随机消息富文本编辑器</a>，编辑完成后将导出的 <code>message.js</code> 替换到项目根目录。</p>
-                    <div class="echo-editor-form-row">
-                        <label>消息内容</label>
-                        <div id="random-message-list" class="random-message-list" role="list" aria-live="polite"></div>
-                        <p id="random-message-input-hint" role="status" aria-live="polite">输入提示：当前空闲</p>
+                <div class="echo-editor-form random-message-panel" id="random-message-panel">
+                    <div class="random-message-dashboard" aria-label="随机消息运行状态">
+                        <div class="random-message-stat random-message-library">
+                            <span>消息库</span>
+                            <strong id="random-message-list" role="status" aria-live="polite">载入中…</strong>
+                        </div>
+                        <div class="random-message-stat random-message-auto">
+                            <span>自动发送</span>
+                            <strong id="random-message-status" data-state="stopped" role="status" aria-live="polite">等待初始化</strong>
+                        </div>
+                        <div class="random-message-stat random-message-timer">
+                            <span>下次发送</span>
+                            <strong id="random-message-countdown">未启动</strong>
+                        </div>
+                        <div class="random-message-stat random-message-recent">
+                            <span>最近发送预览</span>
+                            <strong id="random-message-last" title="最近发送的消息">暂无</strong>
+                        </div>
                     </div>
-                    <div class="fh-flex-row" style="gap:.5rem;flex-wrap:wrap;margin:.5rem 0;">
-                        <button type="button" id="random-message-send" class="fh-button">随机发送一条</button>
-                        <button type="button" id="random-message-start" class="fh-button">启动自动发送</button>
-                        <button type="button" id="random-message-stop" class="fh-button">停止自动发送</button>
+                    <div class="fh-flex-row random-message-actions">
+                        <button type="button" id="random-message-send" class="fh-button random-message-send">随机发送一条</button>
+                        <button type="button" id="random-message-start" class="fh-button random-message-start">启动自动发送</button>
+                        <button type="button" id="random-message-stop" class="fh-button fh-danger random-message-stop" disabled>停止自动发送</button>
                     </div>
-                    <div class="echo-editor-form-row">
-                        <label for="random-message-interval">固定间隔（秒）</label>
-                        <input type="number" id="random-message-interval" value="180" min="5" max="86400" step="1">
+                    <div class="random-message-settings">
+                        <div class="echo-editor-form-row">
+                            <label for="random-message-interval">固定间隔（秒）</label>
+                            <input type="number" id="random-message-interval" value="180" min="5" max="86400" step="1">
+                        </div>
+                        <div class="echo-editor-form-row">
+                            <label for="random-message-jitter">随机浮动（百分比）</label>
+                            <input type="number" id="random-message-jitter" value="20" min="0" max="100" step="1">
+                        </div>
+                        <div class="echo-editor-form-row">
+                            <label for="random-message-char-delay">每字符追加间隔（毫秒）</label>
+                            <input type="number" id="random-message-char-delay" value="35" min="0" max="2000" step="5">
+                        </div>
+                        <div class="echo-editor-form-row">
+                            <label for="random-message-pause-delay">手动输入后恢复等待（秒）</label>
+                            <input type="number" id="random-message-pause-delay" value="5" min="1" max="600" step="1">
+                        </div>
                     </div>
-                    <div class="echo-editor-form-row">
-                        <label for="random-message-jitter">随机浮动（百分比）</label>
-                        <input type="number" id="random-message-jitter" value="20" min="0" max="100" step="1">
-                    </div>
-                    <div class="echo-editor-form-row">
-                        <label for="random-message-char-delay">每字符追加间隔（毫秒）</label>
-                        <input type="number" id="random-message-char-delay" value="35" min="0" max="2000" step="5">
-                    </div>
-                    <div class="echo-editor-form-row">
-                        <label for="random-message-pause-delay">手动输入后恢复等待（秒）</label>
-                        <input type="number" id="random-message-pause-delay" value="5" min="1" max="600" step="1">
-                    </div>
-                    <p>状态：<strong id="random-message-status" role="status" aria-live="polite">等待初始化</strong></p>
-                    <p>倒计时：<strong id="random-message-countdown">未启动</strong></p>
-                    <p>最近发送：<span id="random-message-last">暂无</span></p>
-                    <p style="font-size:var(--font-size-small);color:var(--text-secondary);">自动发送期间，如果编辑器进入手动输入状态，将暂停发送；连续空闲达到恢复等待时间后继续。需启用 Echo-Live 广播功能。</p>
                 </div>
             </section>
 

@@ -9,7 +9,6 @@
     const statusEl = $('#random-message-status');
     const countdownEl = $('#random-message-countdown');
     const lastEl = $('#random-message-last');
-    const inputHintEl = $('#random-message-input-hint');
     if (!listEl || !statusEl) return;
 
     let timer = 0;
@@ -20,9 +19,28 @@
     let dueAt = 0;
     let bag = [];
     let lastMessage = '';
+    let pendingMessage = null;
 
-    function setStatus(message) { statusEl.textContent = message; }
-    function setInputHint(message) { if (inputHintEl) inputHintEl.textContent = '输入提示：' + message; }
+    function updateControls() {
+        const startButton = $('#random-message-start');
+        const stopButton = $('#random-message-stop');
+        const sendButton = $('#random-message-send');
+        const hasMessages = presets().length > 0;
+        if (startButton) {
+            startButton.disabled = active || !hasMessages;
+            startButton.setAttribute('aria-pressed', active ? 'true' : 'false');
+        }
+        if (stopButton) {
+            stopButton.disabled = !active;
+            stopButton.setAttribute('aria-pressed', active ? 'true' : 'false');
+        }
+        if (sendButton) sendButton.disabled = !hasMessages;
+        statusEl.dataset.state = active ? (paused ? 'paused' : 'active') : 'stopped';
+    }
+    function setStatus(message) {
+        statusEl.textContent = message;
+        updateControls();
+    }
     // Presets store Echo-native message data directly. A string/object/array is
     // one message; { messages: [...] } is an ordered queue of message envelopes.
     // Arrays at the message level are paragraph segments, never queue entries.
@@ -90,36 +108,11 @@
             ? window.EchoLiveRandomMessages.map(normalizePreset).filter(message => message !== null)
             : [];
     }
-    function presetLabel(preset) {
-        return preset && typeof preset === 'object' && !Array.isArray(preset) && typeof preset.name === 'string'
-            ? preset.name
-            : messageText(preset).trim().replace(/\s+/g, ' ').slice(0, 90);
-    }
     function renderPresets() {
-        const all = presets();
-        const count = all.length;
-        listEl.textContent = '';
-        const summary = document.createElement('p');
-        summary.className = 'random-message-count';
-        summary.textContent = count > 0
-            ? '已从 message.js 加载 ' + count + ' 条消息。'
-            : 'message.js 中尚未配置消息（0 条）。';
-        listEl.appendChild(summary);
-        if (!all.length) {
-            const empty = document.createElement('p');
-            empty.className = 'random-message-empty';
-            empty.textContent = 'message.js 中尚未配置消息。';
-            listEl.appendChild(empty);
-            return;
-        }
-        const list = document.createElement('ol');
-        list.className = 'random-message-items';
-        all.forEach(message => {
-            const item = document.createElement('li');
-            item.textContent = presetLabel(message) || '（含媒体或扩展数据的消息）';
-            list.appendChild(item);
-        });
-        listEl.appendChild(list);
+        const count = presets().length;
+        listEl.textContent = count > 0 ? '已加载 ' + count + ' 条' : '未配置（0 条）';
+        listEl.setAttribute('aria-label', count > 0 ? '已从 message.js 加载 ' + count + ' 条消息' : 'message.js 中没有有效消息');
+        updateControls();
     }
     function shuffle(items) {
         const a = items.slice();
@@ -165,7 +158,11 @@
             elb.sendData({ username: '', messages: [{ message: JSON.parse(JSON.stringify(message)) }] });
         }
         lastMessage = messageText(message);
-        if (lastEl) lastEl.textContent = presetLabel(message) || lastMessage;
+        if (lastEl) {
+            const preview = lastMessage.trim() || '（媒体或扩展消息）';
+            lastEl.textContent = [...preview].length > 180 ? [...preview].slice(0, 180).join('') + '…' : preview;
+            lastEl.title = preview;
+        }
         return true;
     }
     function sendRandom() {
@@ -202,7 +199,8 @@
         if (!active || paused) return;
         let scheduledMessage;
         try {
-            scheduledMessage = nextMessage();
+            if (!pendingMessage) pendingMessage = nextMessage();
+            scheduledMessage = pendingMessage;
         } catch (error) {
             setStatus(error.message || String(error));
             return;
@@ -219,6 +217,7 @@
             clearInterval(countdownTimer);
             countdownTimer = 0;
             if (!active || paused) return;
+            pendingMessage = null;
             if (sendMessage(scheduledMessage)) setStatus('已发送随机消息。');
             scheduleNext();
         }, delay);
@@ -239,7 +238,7 @@
         clearTimeout(resumeTimer);
         if (countdownEl) countdownEl.textContent = '已暂停';
         setStatus('检测到编辑器输入提示/手动输入，自动发送已暂停。');
-        setInputHint('正在输入，自动发送已暂停');
+
         const secondsValue = Number($('#random-message-pause-delay').value);
         const seconds = Math.max(1, Number.isFinite(secondsValue) && secondsValue > 0 ? secondsValue : 5);
         resumeTimer = setTimeout(() => {
@@ -251,16 +250,16 @@
             }
             paused = false;
             setStatus('输入提示已关闭，自动发送已恢复。');
-            setInputHint('当前空闲，自动发送已恢复');
+
             scheduleNext();
         }, seconds * 1000);
     }
     function refreshInputState() {
         if (manualInputActive()) {
-            setInputHint('正在输入');
+
             pauseForManualInput();
         } else {
-            setInputHint('当前空闲');
+
         }
         if (!manualInputActive() && active && paused) {
             clearTimeout(resumeTimer);
@@ -271,7 +270,7 @@
                 if (manualInputActive()) return;
                 paused = false;
                 setStatus('输入提示已关闭，自动发送已恢复。');
-                setInputHint('当前空闲，自动发送已恢复');
+
                 scheduleNext();
             }, seconds * 1000);
         }
@@ -280,6 +279,18 @@
     $('#random-message-send').addEventListener('click', sendRandom);
     $('#random-message-start').addEventListener('click', () => {
         if (active) return;
+        if (!presets().length) {
+            setStatus('message.js 中没有有效消息，无法启动自动发送。');
+            return;
+        }
+        if (typeof config !== 'undefined' && (!config.echolive || !config.echolive.broadcast || !config.echolive.broadcast.enable)) {
+            setStatus('请先在配置中启用 Echo-Live 广播。');
+            return;
+        }
+        if (typeof elb === 'undefined' || !elb || typeof elb.sendData !== 'function') {
+            setStatus('编辑器广播尚未初始化，请稍后重试。');
+            return;
+        }
         active = true;
         paused = false;
         setStatus('自动发送已启动。');
@@ -289,6 +300,7 @@
     $('#random-message-stop').addEventListener('click', () => {
         active = false;
         paused = false;
+        pendingMessage = null;
         clearSchedule();
         clearTimeout(resumeTimer);
         if (countdownEl) countdownEl.textContent = '未启动';
