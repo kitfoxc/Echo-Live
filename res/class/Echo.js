@@ -157,7 +157,7 @@ class Echo {
                 printSpeed: msg?.speed,
                 event: msg?.event,
                 data: msg?.data,
-                visibility: msg?.visibility
+                visibility: msg?.visibility ?? msg?.['显隐']
             };
 
             let dataAfter = {
@@ -167,7 +167,7 @@ class Echo {
             };
 
             let dataContent, data;
-            if (msg?.visibility !== undefined) {
+            if (msg?.visibility !== undefined || msg?.['显隐'] !== undefined) {
                 // Visibility groups render their full text in one operation, then fade in.
                 // Their text remains in normal layout flow while opacity is zero.
                 dataContent = [{
@@ -182,7 +182,7 @@ class Echo {
 
             data = [dataBefore, ...dataContent, dataAfter];
 
-            if (msg?.typewrite != undefined && msg?.visibility === undefined) {
+            if (msg?.typewrite != undefined && msg?.visibility === undefined && msg?.['显隐'] === undefined) {
                 data = [...data, msg.text];
             }
 
