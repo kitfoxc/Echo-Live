@@ -2,7 +2,7 @@ const config = {
     "data_version": 18,
     "global": {
         "language": "zho-Hans",
-        "theme": "vanilla",
+        "theme": "bubble",
         "theme_variant": "",
         "theme_script_enable": false,
         "color_scheme": "auto",
@@ -14,18 +14,18 @@ const config = {
     "echo": {
         "print_speed": 30,
         "html_format_enable": true,
-        "print_animation_disable": false
+        "print_animation_disable": true
     },
     "echolive": {
         "style": {
-            "live_theme": "",
-            "live_theme_variant": "",
+            "live_theme": "imessage",
+            "live_theme_variant": "gray",
             "live_theme_script_enable": false
         },
         "layout": {
             "username_text_align_right": false,
-            "diplay_controller": true,
-            "controller": "neo_icon"
+            "diplay_controller": false,
+            "controller": "taskbar"
         },
         "broadcast": {
             "enable": true,
@@ -62,11 +62,11 @@ const config = {
             "timing_function": "ease-out"
         },
         "display": {
-            "auto": false,
+            "auto": true,
             "hidden_wait_time": 20000,
             "long_text_compensation_rate": 0.15,
-            "hidden_time": 1000,
-            "show_time": 500
+            "hidden_time": 150,
+            "show_time": 0
         },
         "typing": {
             "enable": false,
@@ -86,7 +86,7 @@ const config = {
         "image": {
             "enable": true,
             "allow_data_url_and_relative_url": true,
-            "default_max_size": 3
+            "default_max_size": 5
         },
         "filter": {
             "enable": true,
