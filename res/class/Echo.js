@@ -308,15 +308,9 @@ class Echo {
         }
         if (data?.customData) this.event.customData(data.customData);
         this.state = 'ready';
-        if (typeof config !== 'undefined' && config?.echo?.print_animation_disable === true) {
-            // 通过现有打印器同步消费缓冲区，保留分组、特殊序列及 printStart/printEnd 事件。
-            let guard = 0;
-            while (this.state !== 'stop' && guard++ < 100000) this.print(this);
-            clearInterval(this.timer);
-            this.timer = 0;
-        } else {
-            this.timer = setInterval(this.print, this.printSpeedStart, this);
-        }
+        // 关闭逐字显示时仍按打印速度推进队列。live.js 会暂时隐藏正在输出的段落，
+        // 并在段落结束时一次性显示，从而保留 pause 的时间间隔。
+        this.timer = setInterval(this.print, this.printSpeedStart, this);
         return this.message;
     }
 
