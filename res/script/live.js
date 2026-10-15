@@ -40,8 +40,16 @@ if (config.echolive.next_audio.enable) {
 let data;
 
 let groupIndex = 0;
+const visibilityGroupDurations = new Map();
+const visibilityTimers = new Map();
 
-// 关闭逐字动画时，普通文本暂存到 printEnd；富文本分组暂时隐藏，groupEnd 后整体显示。
+function clearVisibilityTimers() {
+    for (const timer of visibilityTimers.values()) clearTimeout(timer);
+    visibilityTimers.clear();
+    visibilityGroupDurations.clear();
+}
+
+// 关闭逐字动画时，普通文本即时输出；普通富文本分组在 groupEnd 后显示。
 const printAnimationDisabled = config.echo?.print_animation_disable === true;
 echo.printAnimationDisabled = printAnimationDisabled;
 
@@ -138,12 +146,55 @@ function observeIMessageBubbleContent() {
     refreshIMessageBubbleAnimation();
 }
 
+function observeIMessageBubbleResize() {
+    const bubble = document.querySelector('#echo-live .center-center');
+    if (!bubble || typeof ResizeObserver === 'undefined') return;
+
+    let previousWidth = 0;
+    let previousHeight = 0;
+    let settleTimer = 0;
+    let initialEntranceFinished = false;
+
+    bubble.addEventListener('animationend', event => {
+        if (event.animationName === 'imessage-bubble-pop') {
+            initialEntranceFinished = true;
+        }
+        if (event.animationName === 'imessage-bubble-resize') {
+            bubble.classList.remove('imessage-bubble-resizing');
+        }
+    });
+
+    const observer = new ResizeObserver(entries => {
+        const rect = entries[0]?.contentRect;
+        if (!rect) return;
+
+        const changed = previousWidth > 0
+            && (Math.abs(rect.width - previousWidth) > 1
+                || Math.abs(rect.height - previousHeight) > 1);
+        previousWidth = rect.width;
+        previousHeight = rect.height;
+
+        if (!changed || !initialEntranceFinished || !bubble.classList.contains('imessage-content-active')) return;
+
+        // Debounce repeated character/layout changes into one elastic response.
+        clearTimeout(settleTimer);
+        settleTimer = setTimeout(() => {
+            bubble.classList.remove('imessage-bubble-resizing');
+            void bubble.offsetWidth;
+            bubble.classList.add('imessage-bubble-resizing');
+        }, 90);
+    });
+
+    observer.observe(bubble);
+}
+
 
 
 
 
 $(document).ready(function() {
     observeIMessageBubbleContent();
+    observeIMessageBubbleResize();
     translator.ready(() => {
         emojiHako = new EmojiHako();
         if (config.echolive.layout.diplay_controller) echolive.setController(config.echolive.layout.controller || '');
@@ -223,10 +274,12 @@ echo.on('print', function(chr) {
 });
 
 echo.on('clear', function() {
+    clearVisibilityTimers();
     $('.echo-output').html('');
 });
 
 echo.on('skip', function() {
+    clearVisibilityTimers();
     $('.echo-output').html('');
 });
 
@@ -277,18 +330,37 @@ echo.on('printEnd', function() {
 echo.on('groupStart', function(e) {
     groupIndex = e.groupNow;
     let d = EchoLiveTools.messageStyleGenerator(e.data);
-    const hiddenStyle = printAnimationDisabled ? ';visibility:hidden' : '';
-    $('.echo-output').append(`<span data-group="${groupIndex}" class="${d.class}" style="${d.style}${hiddenStyle}"></span>`);
+    const hasVisibility = e.data?.visibility !== undefined;
+    const hiddenStyle = printAnimationDisabled && !hasVisibility ? ';visibility:hidden' : '';
+    const visibilityStyle = hasVisibility ? ';opacity:0;transition:opacity 260ms ease' : '';
+    if (hasVisibility) {
+        visibilityGroupDurations.set(groupIndex, Math.max(0, Number(e.data.visibility) || 0) * echo.printSpeedStart);
+    }
+    $('.echo-output').append(`<span data-group="${groupIndex}" class="${d.class}" style="${d.style}${hiddenStyle}${visibilityStyle}"></span>`);
 });
 
 echo.on('groupEnd', function(e) {
-    if (printAnimationDisabled && groupIndex !== 0) {
-        const selector = `.echo-output span[data-group="${groupIndex}"]`;
+    // Echo's current groupEnd event reports groupNow but does not reliably expose
+    // the ended group's ID, so capture the active group before advancing it.
+    const endedGroupIndex = groupIndex;
+    const selector = `.echo-output span[data-group="${endedGroupIndex}"]`;
+    if (printAnimationDisabled && endedGroupIndex !== 0) {
         // Typewrite groups remain hidden until typewriteEnd replaces their content.
         if (!$(selector).hasClass('echo-text-typewrite')) {
             $(selector).css('visibility', 'visible');
         }
     }
+
+    if (visibilityGroupDurations.has(endedGroupIndex)) {
+        const delay = visibilityGroupDurations.get(endedGroupIndex);
+        visibilityGroupDurations.delete(endedGroupIndex);
+        const timer = setTimeout(() => {
+            visibilityTimers.delete(endedGroupIndex);
+            $(selector).css('opacity', '1');
+        }, delay);
+        visibilityTimers.set(endedGroupIndex, timer);
+    }
+
     groupIndex = e.groupNow;
 });
 

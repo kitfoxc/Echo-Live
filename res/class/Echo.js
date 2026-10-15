@@ -156,7 +156,8 @@ class Echo {
                 ruby: msg?.ruby,
                 printSpeed: msg?.speed,
                 event: msg?.event,
-                data: msg?.data
+                data: msg?.data,
+                visibility: msg?.visibility ?? msg?.['显隐']
             };
 
             let dataAfter = {
@@ -166,7 +167,14 @@ class Echo {
             };
 
             let dataContent, data;
-            if (msg?.typewrite == undefined) {
+            if (msg?.visibility !== undefined || msg?.['显隐'] !== undefined) {
+                // Visibility groups render their full text in one operation, then fade in.
+                // Their text remains in normal layout flow while opacity is zero.
+                dataContent = [{
+                    action: 'visibility_content',
+                    text: String(msg.text ?? '')
+                }];
+            } else if (msg?.typewrite == undefined) {
                 dataContent = [...msg.text];
             } else {
                 dataContent = [...msg.typewrite];
@@ -174,7 +182,15 @@ class Echo {
 
             data = [dataBefore, ...dataContent, dataAfter];
 
-            if (msg?.typewrite != undefined) {
+            const visibilityValue = msg?.visibility ?? msg?.['显隐'];
+            if (visibilityValue !== undefined) {
+                data.push({
+                    action: 'visibility_wait',
+                    duration: Math.max(0, Number(visibilityValue) || 0)
+                });
+            }
+
+            if (msg?.typewrite != undefined && msg?.visibility === undefined && msg?.['显隐'] === undefined) {
                 data = [...data, msg.text];
             }
 
@@ -221,28 +237,44 @@ class Echo {
             that.event.printStart();
         }
 
-        // pause 是独立的时间标记，不再依赖空字符串占位。
-        if (that.messageBuffer[0]?.action === 'pause') {
-            const pause = that.messageBuffer.shift();
-            const duration = Math.max(0, Number(pause.duration) || 0) * that.printSpeedStart;
-            if (duration > 0) {
-                clearInterval(that.timer);
-                that.timer = 0;
-                clearTimeout(that.pauseTimer);
-                that.pauseTimer = setTimeout(() => {
-                    that.pauseTimer = 0;
-                    if (that.state !== 'stop' && that.state !== 'last') {
-                        that.timer = setInterval(that.print, that.printAnimationDisabled ? 0 : that.printSpeedChange, that);
-                    }
-                }, duration);
-                return;
+        // pause 和显隐等待都是序列屏障：完成当前段落后才继续消费后续内容。
+        const waitAction = that.messageBuffer[0]?.action;
+        if (waitAction === 'pause' || waitAction === 'visibility_wait') {
+            const wait = that.messageBuffer.shift();
+            const delay = Math.max(0, Number(wait.duration) || 0) * that.printSpeedStart;
+            const fadeDuration = waitAction === 'visibility_wait' ? 280 : 0;
+            clearInterval(that.timer);
+            that.timer = 0;
+            clearTimeout(that.pauseTimer);
+            that.pauseTimer = setTimeout(() => {
+                that.pauseTimer = 0;
+                if (that.state !== 'stop' && that.state !== 'last') {
+                    that.timer = setInterval(that.print, that.printAnimationDisabled ? 0 : that.printSpeedChange, that);
+                }
+            }, delay + fadeDuration);
+            if (waitAction === 'visibility_wait' && delay === 0) {
+                // groupEnd schedules opacity to 1; allow the CSS fade to finish before advancing.
             }
+            return;
         }
 
         // 关闭逐字动画时，在同一个任务中输出到下一个 pause。
         // 浏览器因此可以直接排版完整段落，而不是逐字符改变气泡尺寸。
         if (that.printAnimationDisabled) {
             return that.printDisabledBatch(that);
+        }
+
+        // A visibility-marked rich-text group must be laid out in full before its fade-in.
+        if (that.messageBuffer[0]?.action === 'visibility_content') {
+            const item = that.messageBuffer.shift();
+            let content = String(item.text ?? '');
+            if (that.filter.HTMLFormat) {
+                content = content.replace(/ /g, '&ensp;');
+                content = content.replace(/</g, '&lt;');
+                content = content.replace(/>/g, '&gt;');
+            }
+            that.event.print(content);
+            return content;
         }
 
         let a;
@@ -290,6 +322,8 @@ class Echo {
                 typeof that.messageBuffer[0] == 'object'
                 && that.messageBuffer[0]?.action !== 'custom_sequence'
                 && that.messageBuffer[0]?.action !== 'pause'
+                && that.messageBuffer[0]?.action !== 'visibility_wait'
+                && that.messageBuffer[0]?.action !== 'visibility_content'
             ) {
                 let obj = that.messageBuffer.shift();
                 if (obj.action == 'group_start') {
@@ -324,7 +358,7 @@ class Echo {
             const next = that.messageBuffer[0];
 
             if (next && typeof next === 'object') {
-                if (next.action === 'pause') break;
+                if (next.action === 'pause' || next.action === 'visibility_wait') break;
                 that.messageBuffer.shift();
                 if (next.action === 'custom_sequence') {
                     that.event.customSequence(next);
@@ -332,6 +366,15 @@ class Echo {
                     that.groupStart(next);
                 } else if (next.action === 'group_end') {
                     that.groupEnd(next);
+                } else if (next.action === 'visibility_content') {
+                    let content = String(next.text ?? '');
+                    if (that.filter.HTMLFormat) {
+                        content = content.replace(/ /g, '&ensp;');
+                        content = content.replace(/</g, '&lt;');
+                        content = content.replace(/>/g, '&gt;');
+                    }
+                    that.event.print(content);
+                    lastOutput = content;
                 }
                 continue;
             }
