@@ -323,6 +323,7 @@ class Echo {
                 && that.messageBuffer[0]?.action !== 'custom_sequence'
                 && that.messageBuffer[0]?.action !== 'pause'
                 && that.messageBuffer[0]?.action !== 'visibility_wait'
+                && that.messageBuffer[0]?.action !== 'visibility_content'
             ) {
                 let obj = that.messageBuffer.shift();
                 if (obj.action == 'group_start') {
